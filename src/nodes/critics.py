@@ -2,6 +2,7 @@ from src.prompts.consistency import ConsistencyPrompts
 from src.arbitration.states import ArbitrationState
 from langchain_openai import ChatOpenAI
 from src.prompts.accuracy import AccuracyPrompts
+from src.prompts.completeness import CompletenessPrompts
 from src.arbitration.schemas.critique import CritiqueSchema
 from langchain.messages import SystemMessage,HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -47,4 +48,23 @@ def logic_critic(state:ArbitrationState) -> dict:
     llm_response = llm_with_structured_output.invoke([sysPrompt, prompts])
     return {
         "critiques": [llm_response]
-    }   
+    }
+
+def completeness_critic(state:ArbitrationState) -> dict:
+    original_question = state.get("original_question", "").strip()
+    generated_output = state.get("generated_output", "").strip()
+
+    if not original_question or not generated_output:
+        raise ValueError("Original question and generated output must be provided in the state.")
+
+    sysPrompt = SystemMessage(content=CompletenessPrompts.COMPLETENESS_SYSTEM_PROMPT)
+    prompts = HumanMessage(content=CompletenessPrompts().get_completeness_prompt(original_question, generated_output))
+
+    llm = ChatOpenAI(model="gpt-5-mini", streaming=False)
+    llm_with_structured_output = llm.with_structured_output(CritiqueSchema)
+
+    llm_response = llm_with_structured_output.invoke([sysPrompt, prompts])
+
+    return {
+        "critiques": [llm_response]
+    }
