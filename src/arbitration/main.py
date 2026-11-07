@@ -1,5 +1,5 @@
 from src.arbitration.states import ArbitrationState
-from src.nodes.critics import accuracy_critic
+from src.nodes.critics import accuracy_critic,logic_critic
 
 
 def main():
@@ -7,7 +7,8 @@ def main():
         original_question="What is the capital of France?",
         generated_output="The capital of France is Berlin."
     )
-    llm = accuracy_critic(state)
+    # llm = accuracy_critic(state)
+    llm = logic_critic(state)
 
     print(llm)
 
