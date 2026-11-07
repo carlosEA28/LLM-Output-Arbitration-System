@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "arbitration": "./src/arbitration/graph.py:run_agents_graph"
+  },
+  "env": ".env"
+}
