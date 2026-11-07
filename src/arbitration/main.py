@@ -1,17 +1,28 @@
-from src.arbitration.states import ArbitrationState
-from src.nodes.critics import accuracy_critic,logic_critic,completeness_critic
+
+from src.arbitration.graph import run_agents_graph
 
 
 def main():
-    state = ArbitrationState(
-        original_question="What is the capital of France?",
-        generated_output="The capital of France is Berlin."
-    )
-    # llm = accuracy_critic(state)
-    # llm = logic_critic(state)
-    llm = completeness_critic(state)
+    graph = run_agents_graph()
 
-    print(llm)
+    initial_state = {
+        "original_question": "What is the capital of France?",
+        "generated_output": "The capital of France is Berlin.",
+        "critiques": [],
+        "disagreements": [],
+        "requires_adjudication": False,
+        "verdict": None,
+        "failed_critics": [],
+    }
+
+    result = graph.invoke(initial_state)
+
+    for critique in result["critiques"]:
+        print(f"\nDimension: {critique.dimension.value}")
+        print(f"Score: {critique.score}")
+        print(f"Confidence: {critique.confidence}")
+        print(f"Issues: {critique.issues}")
+
 
 if __name__ == "__main__":
     main()
