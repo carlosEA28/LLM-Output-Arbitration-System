@@ -76,7 +76,8 @@ class CollectCritiquesTests(unittest.TestCase):
             [item.dimension.value for item in result["critiques"]],
             ["accuracy", "completeness"],
         )
-        self.assertIsNone(result.get("verdict"))
+        self.assertEqual(result["verdict"].status, "assessed")
+        self.assertEqual(result["verdict"].confidence, 0.5)
 
     def test_graph_preserves_three_critiques(self):
         from src.arbitration import graph as graph_module

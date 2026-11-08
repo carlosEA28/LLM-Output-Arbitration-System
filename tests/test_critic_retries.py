@@ -113,7 +113,8 @@ class CriticRetriesTests(unittest.TestCase):
         self.assertFalse(result["critiques_complete"])
         self.assertEqual(result["disagreements"], [])
         self.assertFalse(result["requires_adjudication"])
-        self.assertIsNone(result["verdict"])
+        self.assertEqual(result["verdict"].status, "inconclusive")
+        self.assertEqual(result["verdict"].confidence, 0)
 
 
 if __name__ == "__main__":

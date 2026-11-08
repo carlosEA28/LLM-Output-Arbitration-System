@@ -12,14 +12,8 @@ from src.nodes.critics import (
 from src.nodes.parse_input import parse_input
 from src.nodes.collect_critiques import collect_critiques
 from src.nodes.detect_disagreements import detect_disagreements
-
-
-def adjudicator(state: ArbitrationState) -> dict:
-    return {}
-
-
-def synthesize_verdict(state: ArbitrationState) -> dict:
-    return {}
+from src.nodes.adjudicator import adjudicator
+from src.nodes.synthesize_verdict import synthesize_verdict
 
 
 def route_after_disagreements(

@@ -7,7 +7,9 @@ os.environ["LANGSMITH_TRACING"] = "false"
 from src.arbitration import graph as graph_module
 from src.arbitration.schemas.critique import CritiqueSchema, IssueSchema
 from src.arbitration.schemas.disagreement import ConflictAssessment, IssueConflict
+from src.arbitration.schemas.verdict import AdjudicationSchema, VerdictSchema
 from src.nodes import detect_disagreements as detector
+from src.nodes import adjudicator as adjudicator_node
 
 
 class GraphRoutingTests(unittest.TestCase):
@@ -46,7 +48,10 @@ class GraphRoutingTests(unittest.TestCase):
         )
         retained_accuracy = next(item for item in result["critiques"] if item.dimension.value == "accuracy")
         self.assertEqual(retained_accuracy.issues[0].severity.value, "critical")
-        self.assertIsNone(result["verdict"])
+        self.assertIsInstance(result["verdict"], VerdictSchema)
+        self.assertEqual(result["verdict"].confirmed_issues, [])
+        self.assertEqual(result["verdict"].unverified_issues, [critical])
+        self.assertEqual(result["verdict"].confidence, 0.5)
         model.assert_not_called()
 
     def test_available_conflicting_issues_route_to_adjudicator(self):
@@ -61,11 +66,18 @@ class GraphRoutingTests(unittest.TestCase):
         model.invoke.return_value = ConflictAssessment(conflicts=[IssueConflict(
             first_issue=0, second_issue=1, explanation="Opposite assessments of the same claim.",
         )])
+        adjudicator_model = Mock()
+        adjudicator_model.with_structured_output.return_value = adjudicator_model
+        adjudicator_model.invoke.return_value = AdjudicationSchema(
+            confirmed_issues=accuracy.issues,
+            dismissed_issues=[],
+        )
         with (
             patch.object(graph_module, "accuracy_critic", return_value={"critiques": [accuracy]}),
             patch.object(graph_module, "logic_critic", return_value={"critiques": [logic]}),
             patch.object(graph_module, "completeness_critic", return_value={"failed_critics": ["completeness_critic"]}),
             patch.object(detector, "ChatOpenAI", return_value=model),
+            patch.object(adjudicator_node, "ChatOpenAI", return_value=adjudicator_model),
         ):
             graph = graph_module.run_agents_graph()
             updates = list(graph.stream({
@@ -84,12 +96,16 @@ class GraphRoutingTests(unittest.TestCase):
         self.assertTrue(node_updates["detect_disagreements"]["requires_adjudication"])
         self.assertEqual(len(node_updates["detect_disagreements"]["disagreements"]), 1)
         model.invoke.assert_called_once()
+        adjudicator_model.invoke.assert_called_once()
+        self.assertEqual(node_updates["synthesize_verdict"]["verdict"].status, "assessed")
+        self.assertIn(accuracy.issues[0], node_updates["synthesize_verdict"]["verdict"].confirmed_issues)
 
     def run_path(self, requires_adjudication: bool) -> list[str]:
         with (
             patch.object(graph_module, "accuracy_critic", return_value={}),
             patch.object(graph_module, "logic_critic", return_value={}),
             patch.object(graph_module, "completeness_critic", return_value={}),
+            patch.object(graph_module, "adjudicator", return_value={"adjudication": AdjudicationSchema()}),
             patch.object(
                 graph_module,
                 "detect_disagreements",
@@ -144,6 +160,17 @@ class GraphRoutingTests(unittest.TestCase):
                 "synthesize_verdict",
             ],
         )
+
+    def test_all_critics_failed_reaches_inconclusive_verdict(self):
+        with (
+            patch.object(graph_module, "accuracy_critic", return_value={"failed_critics": ["accuracy_critic"]}),
+            patch.object(graph_module, "logic_critic", return_value={"failed_critics": ["logic_critic"]}),
+            patch.object(graph_module, "completeness_critic", return_value={"failed_critics": ["completeness_critic"]}),
+        ):
+            graph = graph_module.run_agents_graph()
+        result = graph.invoke({"original_question": "Question?", "generated_output": "Answer.", "critiques": [], "failed_critics": []})
+        self.assertEqual(result["verdict"].status, "inconclusive")
+        self.assertEqual(result["verdict"].confidence, 0)
 
 
 if __name__ == "__main__":
