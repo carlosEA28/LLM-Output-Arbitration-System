@@ -1,3 +1,5 @@
+from typing import Literal
+
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
@@ -12,6 +14,20 @@ from src.nodes.collect_critiques import collect_critiques
 from src.nodes.detect_disagreements import detect_disagreements
 
 
+def adjudicator(state: ArbitrationState) -> dict:
+    return {}
+
+
+def synthesize_verdict(state: ArbitrationState) -> dict:
+    return {}
+
+
+def route_after_disagreements(
+    state: ArbitrationState,
+) -> Literal["adjudicator", "synthesize_verdict"]:
+    return "adjudicator" if state["requires_adjudication"] else "synthesize_verdict"
+
+
 def run_agents_graph() -> CompiledStateGraph:
     graph = StateGraph(ArbitrationState)
 
@@ -21,6 +37,8 @@ def run_agents_graph() -> CompiledStateGraph:
     graph.add_node("completeness_critic", completeness_critic)
     graph.add_node("collect_critiques", collect_critiques)
     graph.add_node("detect_disagreements", detect_disagreements)
+    graph.add_node("adjudicator", adjudicator)
+    graph.add_node("synthesize_verdict", synthesize_verdict)
 
     graph.add_edge(START, "parse_input")
 
@@ -33,6 +51,15 @@ def run_agents_graph() -> CompiledStateGraph:
         "collect_critiques",
     )
     graph.add_edge("collect_critiques", "detect_disagreements")
-    graph.add_edge("detect_disagreements", END)
+    graph.add_conditional_edges(
+        "detect_disagreements",
+        route_after_disagreements,
+        {
+            "adjudicator": "adjudicator",
+            "synthesize_verdict": "synthesize_verdict",
+        },
+    )
+    graph.add_edge("adjudicator", "synthesize_verdict")
+    graph.add_edge("synthesize_verdict", END)
 
     return graph.compile()

@@ -2,7 +2,7 @@
 
 Protótipo em Python para avaliar uma resposta gerada por um modelo de linguagem em relação à pergunta original. O projeto usa um grafo LangGraph para executar três críticos em paralelo: exatidão factual, consistência lógica e completude. Cada crítico retorna uma avaliação estruturada com nota, problemas encontrados e grau de confiança.
 
-O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne as três críticas e detecta contradições entre elas, mas ainda não executa o adjudicador nem produz um veredito final.**
+O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne as três críticas, detecta divergências e escolhe o próximo caminho. O adjudicador e a síntese do veredito ainda são placeholders sem lógica.**
 
 ## Como funciona hoje
 
@@ -16,6 +16,10 @@ flowchart LR
     D --> F
     E --> F
     F --> G[Detecção de divergências]
+    G -->|requires_adjudication = true| H[Adjudicador: placeholder]
+    G -->|requires_adjudication = false| I[Síntese do veredito: placeholder]
+    H --> I
+    I --> J[Fim]
 ```
 
 1. `parse_input` remove espaços nas extremidades e rejeita pergunta ou resposta vazia.
@@ -23,6 +27,7 @@ flowchart LR
 3. O estado do grafo acumula as respostas no campo `critiques`. Falhas dos modelos são registradas em `failed_critics`.
 4. `collect_critiques` identifica dimensões ausentes ou duplicadas e define `critiques_complete`. O resultado é completo apenas quando as três dimensões aparecem uma vez cada e não há críticos com falha.
 5. `detect_disagreements` compara os problemas descritos por críticos diferentes. Registra contradições em `disagreements` e define `requires_adjudication` quando encontra alguma. Diferenças de nota, isoladamente, não são divergências.
+6. O grafo envia o estado ao `adjudicator` quando `requires_adjudication` é verdadeiro; caso contrário, segue diretamente para `synthesize_verdict`. Ambos os nós são placeholders e não alteram o estado.
 
 Cada crítica segue o esquema `CritiqueSchema`:
 
@@ -88,6 +93,12 @@ O estado de entrada requer `original_question` e `generated_output`. O exemplo e
 uv run langgraph validate -c langgraph.json
 ```
 
+Para testar os dois caminhos sem chamadas aos modelos, execute os testes que substituem os críticos e o detector por resultados simulados:
+
+```bash
+uv run python -m unittest tests.test_graph_routing -v
+```
+
 ## Estrutura principal
 
 | Caminho | Responsabilidade |
@@ -109,6 +120,7 @@ uv run langgraph validate -c langgraph.json
 
 - **Implementado:** validação básica da entrada, três críticos em paralelo e críticas estruturadas.
 - **Implementado:** identificação de contradições explícitas entre problemas relatados por críticos diferentes e decisão sobre necessidade de adjudicação. A interpretação das descrições em texto livre usa `gpt-5-mini`; quando não há problemas de pelo menos dois críticos, o detector retorna sem chamar o modelo.
-- **Ainda não implementado:** agente adjudicador e veredito final. `src/arbitration/schemas/verdict.py` ainda está vazio.
+- **Implementado:** roteamento condicional após a detecção de divergências, com os dois caminhos ligados ao fim do grafo.
+- **Ainda não implementado:** lógica do agente adjudicador e síntese do veredito final. `src/arbitration/schemas/verdict.py` ainda está vazio.
 - **Ainda não integrado:** recuperação de contexto (RAG), ferramentas e persistência; os diretórios reservados para essas partes não contêm implementação.
 - **Limitação conhecida:** o nó de consistência passa os argumentos ao construtor do prompt em ordem inversa à assinatura da função. Isso pode trocar pergunta e resposta no prompt enviado ao modelo. A execução também depende da disponibilidade das APIs e dos modelos configurados.
