@@ -1,7 +1,5 @@
 """Find substantive contradictions between the critics' reported issues."""
 
-from itertools import combinations
-
 from langchain.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
@@ -16,25 +14,27 @@ from src.arbitration.states import ArbitrationState
 
 def detect_disagreements(state: ArbitrationState) -> dict:
     critiques = state.get("critiques", [])
+
+    if not critiques:
+        return {
+            "disagreements": [],
+            "requires_adjudication": False,
+        }
+
     disagreements = []
 
-    with_issues = [
-        critique.dimension.value
-        for critique in critiques
-        if critique.issues
-    ]
+    for critique in critiques:
+        if critique.score <= 2 and not critique.issues:
+            disagreements.append(
+                f"{critique.dimension.value}: "
+                "Low score without identified issues."
+            )
 
-    without_issues = [
-        critique.dimension.value
-        for critique in critiques
-        if not critique.issues
-    ]
-
-    if with_issues and without_issues:
-        disagreements.append(
-            f"Issues detected by {', '.join(with_issues)}, "
-            f"but not by {', '.join(without_issues)}."
-        )
+        if critique.score == 5 and critique.issues:
+            disagreements.append(
+                f"{critique.dimension.value}: "
+                "High score despite identified issues."
+            )
 
     return {
         "disagreements": disagreements,

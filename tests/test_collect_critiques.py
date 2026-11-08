@@ -69,9 +69,14 @@ class CollectCritiquesTests(unittest.TestCase):
         })
 
         self.assertEqual(result["missing_dimensions"], ["logic"])
+        self.assertEqual(result["duplicate_dimensions"], [])
         self.assertEqual(result["failed_critics"], ["logic_critic"])
         self.assertFalse(result["critiques_complete"])
-        self.assertEqual(len(result["critiques"]), 2)
+        self.assertCountEqual(
+            [item.dimension.value for item in result["critiques"]],
+            ["accuracy", "completeness"],
+        )
+        self.assertIsNone(result.get("verdict"))
 
     def test_graph_preserves_three_critiques(self):
         from src.arbitration import graph as graph_module
@@ -91,7 +96,13 @@ class CollectCritiquesTests(unittest.TestCase):
         })
 
         self.assertTrue(result["critiques_complete"])
-        self.assertEqual(len(result["critiques"]), 3)
+        self.assertCountEqual(
+            [item.dimension.value for item in result["critiques"]],
+            ["accuracy", "logic", "completeness"],
+        )
+        self.assertEqual(result["failed_critics"], [])
+        self.assertEqual(result["missing_dimensions"], [])
+        self.assertEqual(result["duplicate_dimensions"], [])
 
     def test_logic_critic_records_model_failure(self):
         from src.nodes import critics

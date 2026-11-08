@@ -26,10 +26,10 @@ flowchart LR
 2. Os três nós críticos recebem a mesma entrada e executam chamadas a modelos de linguagem em paralelo.
 3. O estado do grafo acumula as respostas no campo `critiques`. Cada crítico faz até duas tentativas apenas para falhas transitórias (timeout, conexão, limite de taxa ou erro de servidor). Após uma falha definitiva, registra seu nome em `failed_critics` sem interromper os demais.
 4. `collect_critiques` identifica dimensões ausentes ou duplicadas e define `critiques_complete`. O resultado é completo apenas quando as três dimensões aparecem uma vez cada e não há críticos com falha.
-5. `detect_disagreements` compara os problemas descritos por críticos diferentes. Registra contradições em `disagreements` e define `requires_adjudication` quando encontra alguma. Diferenças de nota, isoladamente, não são divergências.
+5. `detect_disagreements` compara afirmações explícitas nos problemas descritos por críticos diferentes. Quando pelo menos dois críticos relatam problemas, uma avaliação estruturada procura afirmações incompatíveis sobre o mesmo aspecto da resposta; referências inválidas ou repetidas são descartadas. Apenas contradições confirmadas entram em `disagreements` e ativam `requires_adjudication`. Notas diferentes, um problema sem menção equivalente por outro crítico e diferenças entre dimensões não bastam para isso.
 6. O grafo envia o estado ao `adjudicator` quando `requires_adjudication` é verdadeiro; caso contrário, segue diretamente para `synthesize_verdict`. Ambos os nós são placeholders e não alteram o estado.
 
-Quando todos os críticos falham, `critiques` fica vazio, `missing_dimensions` lista as três dimensões e `critiques_complete` é `False`. Nesse caso, `verdict` permanece `None`: não há avaliações suficientes para um veredito confiável.
+Quando um crítico falha, as avaliações dos demais permanecem em `critiques`, a dimensão ausente aparece em `missing_dimensions` e `critiques_complete` é `False`. Quando todos falham, `critiques` fica vazio, `missing_dimensions` lista as três dimensões e `critiques_complete` continua `False`. Nesse caso, `verdict` permanece `None`: não há avaliações suficientes para um veredito confiável. Problemas críticos dos avaliadores disponíveis permanecem nas críticas mesmo sem divergência.
 
 Cada crítica segue o esquema `CritiqueSchema`:
 

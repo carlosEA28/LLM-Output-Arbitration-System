@@ -33,6 +33,43 @@ class FakeModel:
 
 
 class DetectDisagreementsTests(unittest.TestCase):
+    def test_missing_critics_do_not_create_a_conflict_or_discard_critical_issue(self):
+        critical = IssueSchema(description="The cited dosage is unsafe.", severity="critical")
+        available = CritiqueSchema(
+            dimension="accuracy", score=1, confidence=0.9, issues=[critical]
+        )
+        state = {
+            "critiques": [available],
+            "failed_critics": ["logic_critic", "completeness_critic"],
+            "critiques_complete": False,
+        }
+        with patch.object(detector, "ChatOpenAI") as model:
+            result = detector.detect_disagreements(state)
+        self.assertEqual(result, {"disagreements": [], "requires_adjudication": False})
+        self.assertIs(state["critiques"][0].issues[0], critical)
+        self.assertEqual(state["critiques"][0].issues[0].severity.value, "critical")
+        model.assert_not_called()
+
+    def test_all_failed_critics_do_not_create_a_conflict(self):
+        state = {
+            "critiques": [],
+            "failed_critics": ["accuracy_critic", "logic_critic", "completeness_critic"],
+            "critiques_complete": False,
+        }
+        with patch.object(detector, "ChatOpenAI") as model:
+            result = detector.detect_disagreements(state)
+        self.assertEqual(result, {"disagreements": [], "requires_adjudication": False})
+        model.assert_not_called()
+
+    def test_assessment_error_is_not_reported_as_no_conflict(self):
+        state = {"critiques": [
+            critique("accuracy", 1, "The claim is false."),
+            critique("logic", 2, "The same claim is true."),
+        ]}
+        with patch.object(detector, "ChatOpenAI", side_effect=RuntimeError("unavailable")):
+            with self.assertRaisesRegex(RuntimeError, "unavailable"):
+                detector.detect_disagreements(state)
+
     def test_opposite_scores_in_different_dimensions_are_not_conflict(self):
         state = {"critiques": [
             critique("accuracy", 1, "Berlin is not the capital of France."),
@@ -63,6 +100,7 @@ class DetectDisagreementsTests(unittest.TestCase):
         self.assertTrue(result["requires_adjudication"])
         self.assertEqual(len(result["disagreements"]), 1)
         self.assertIn("accuracy (issue 1) vs logic (issue 1)", result["disagreements"][0])
+        self.assertIn("cannot be both true and false", result["disagreements"][0])
         self.assertIn("Berlin", fake.messages[1].content)
 
     def test_compatible_issues_do_not_require_adjudication(self):
@@ -82,6 +120,7 @@ class DetectDisagreementsTests(unittest.TestCase):
         ]}
         fake = FakeModel(ConflictAssessment(conflicts=[
             IssueConflict(first_issue=0, second_issue=1, explanation="Same critic."),
+            IssueConflict(first_issue=-1, second_issue=2, explanation="Negative index."),
             IssueConflict(first_issue=0, second_issue=9, explanation="Missing issue."),
             IssueConflict(first_issue=0, second_issue=2, explanation="Conflicting claims."),
             IssueConflict(first_issue=2, second_issue=0, explanation="Repeated."),

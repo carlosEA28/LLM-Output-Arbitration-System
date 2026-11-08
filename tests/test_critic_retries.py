@@ -109,7 +109,10 @@ class CriticRetriesTests(unittest.TestCase):
             ["accuracy_critic", "logic_critic", "completeness_critic"],
         )
         self.assertEqual(result["missing_dimensions"], ["accuracy", "logic", "completeness"])
+        self.assertEqual(result["duplicate_dimensions"], [])
         self.assertFalse(result["critiques_complete"])
+        self.assertEqual(result["disagreements"], [])
+        self.assertFalse(result["requires_adjudication"])
         self.assertIsNone(result["verdict"])
 
 
