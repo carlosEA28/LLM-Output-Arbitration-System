@@ -19,6 +19,8 @@ class ConsistencyPrompts:
     7. Quote the exact passage associated with each identified issue.
     8. Explain the logical problem and assign an appropriate severity.
     9. Do not invent contradictions or reasoning steps that are not present in the response.
+    10. Use the original question only as context. Evaluate and quote only the generated response.
+    11. A short answer without an argument is not, by itself, a logical inconsistency.
 
     Scoring:
     1 = Severe logical contradictions or fundamentally invalid reasoning
@@ -26,6 +28,8 @@ class ConsistencyPrompts:
     3 = Some logical gaps or questionable inferences
     4 = Mostly consistent reasoning with minor issues
     5 = No logical inconsistencies identified
+
+    If there are no logical issues, return score 5 with an empty issues list. Lower confidence if the response contains too little reasoning to assess deeply.
 
     Provide a structured critique containing:
     - dimension: logic
@@ -39,7 +43,7 @@ class ConsistencyPrompts:
     """
 
     @staticmethod
-    def get_consistency_prompt(text: str, question: str) -> str:
+    def get_consistency_prompt(question: str, text: str) -> str:
         """Returns the consistency prompt for the given text."""
         return f"""
         Evaluate the logical consistency of the following LLM-generated response.
@@ -50,14 +54,17 @@ class ConsistencyPrompts:
         **Generated Response:**
         {text}
 
+        Evaluate only the Generated Response. The Original Question is context, not the text being critiqued.
+
         Identify internal contradictions, invalid inferences, unsupported conclusions, and logical inconsistencies.
 
         For each identified issue:
-        - Quote the exact relevant passage.
+        - Quote an exact passage from the Generated Response only; never quote the Original Question as an issue.
         - Explain the logical inconsistency.
         - Assign an appropriate severity.
 
         Do not evaluate the factual accuracy of claims. Focus exclusively on whether the reasoning is logically coherent.
+        A concise factual answer without reasoning is not automatically a logical issue. If no logical issues are present, return score 5 and issues [].
 
         Return your assessment according to the required structured critique schema.
         """

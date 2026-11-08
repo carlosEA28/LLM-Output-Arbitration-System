@@ -2,7 +2,7 @@
 
 Protótipo em Python para avaliar uma resposta gerada por um modelo de linguagem em relação à pergunta original. O projeto usa um grafo LangGraph para executar três críticos em paralelo: exatidão factual, consistência lógica e completude. Cada crítico retorna uma avaliação estruturada com nota, problemas encontrados e grau de confiança.
 
-O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne as três críticas, mas ainda não arbitra divergências nem produz um veredito final.**
+O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne e confere as três críticas, mas ainda não arbitra divergências nem produz um veredito final.**
 
 ## Como funciona hoje
 
@@ -12,14 +12,15 @@ flowchart LR
     B --> C[Crítico de exatidão factual]
     B --> D[Crítico de consistência lógica]
     B --> E[Crítico de completude]
-    C --> F[Lista de críticas]
+    C --> F[Conferência das críticas]
     D --> F
     E --> F
 ```
 
 1. `parse_input` remove espaços nas extremidades e rejeita pergunta ou resposta vazia.
 2. Os três nós críticos recebem a mesma entrada e executam chamadas a modelos de linguagem em paralelo.
-3. O estado do grafo acumula as respostas no campo `critiques`.
+3. O estado do grafo acumula as respostas no campo `critiques`. Falhas dos modelos são registradas em `failed_critics`.
+4. `collect_critiques` identifica dimensões ausentes ou duplicadas e define `critiques_complete`. O resultado é completo apenas quando as três dimensões aparecem uma vez cada e não há críticos com falha.
 
 Cada crítica segue o esquema `CritiqueSchema`:
 
@@ -94,6 +95,7 @@ uv run langgraph validate -c langgraph.json
 | `src/arbitration/schemas/critique.py` | Esquemas das críticas e problemas |
 | `src/nodes/parse_input.py` | Validação básica da entrada |
 | `src/nodes/critics.py` | Chamadas aos três modelos |
+| `src/nodes/collect_critiques.py` | Conferência das três críticas e das falhas |
 | `src/prompts/` | Instruções de avaliação para cada dimensão |
 | `src/arbitration/main.py` | Exemplo de execução no terminal |
 | `langgraph.json` | Registro do grafo para a CLI do LangGraph |
