@@ -2,7 +2,7 @@
 
 Protótipo em Python para avaliar uma resposta gerada por um modelo de linguagem em relação à pergunta original. O projeto usa um grafo LangGraph para executar três críticos em paralelo: exatidão factual, consistência lógica e completude. Cada crítico retorna uma avaliação estruturada com nota, problemas encontrados e grau de confiança.
 
-O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne e confere as três críticas, mas ainda não arbitra divergências nem produz um veredito final.**
+O nome do projeto descreve a arquitetura pretendida. **No estado atual, o grafo reúne as três críticas e detecta contradições entre elas, mas ainda não executa o adjudicador nem produz um veredito final.**
 
 ## Como funciona hoje
 
@@ -15,12 +15,14 @@ flowchart LR
     C --> F[Conferência das críticas]
     D --> F
     E --> F
+    F --> G[Detecção de divergências]
 ```
 
 1. `parse_input` remove espaços nas extremidades e rejeita pergunta ou resposta vazia.
 2. Os três nós críticos recebem a mesma entrada e executam chamadas a modelos de linguagem em paralelo.
 3. O estado do grafo acumula as respostas no campo `critiques`. Falhas dos modelos são registradas em `failed_critics`.
 4. `collect_critiques` identifica dimensões ausentes ou duplicadas e define `critiques_complete`. O resultado é completo apenas quando as três dimensões aparecem uma vez cada e não há críticos com falha.
+5. `detect_disagreements` compara os problemas descritos por críticos diferentes. Registra contradições em `disagreements` e define `requires_adjudication` quando encontra alguma. Diferenças de nota, isoladamente, não são divergências.
 
 Cada crítica segue o esquema `CritiqueSchema`:
 
@@ -96,6 +98,9 @@ uv run langgraph validate -c langgraph.json
 | `src/nodes/parse_input.py` | Validação básica da entrada |
 | `src/nodes/critics.py` | Chamadas aos três modelos |
 | `src/nodes/collect_critiques.py` | Conferência das três críticas e das falhas |
+| `src/nodes/detect_disagreements.py` | Detecção de contradições entre problemas relatados |
+| `src/arbitration/schemas/disagreement.py` | Esquema da avaliação estruturada de conflitos |
+| `src/prompts/disagreements.py` | Instruções para comparar as avaliações |
 | `src/prompts/` | Instruções de avaliação para cada dimensão |
 | `src/arbitration/main.py` | Exemplo de execução no terminal |
 | `langgraph.json` | Registro do grafo para a CLI do LangGraph |
@@ -103,6 +108,7 @@ uv run langgraph validate -c langgraph.json
 ## Estado atual e próximos passos
 
 - **Implementado:** validação básica da entrada, três críticos em paralelo e críticas estruturadas.
-- **Ainda não implementado:** identificação de divergências entre críticos, decisão sobre necessidade de adjudicação, agente adjudicador e veredito final. Os campos correspondentes já existem no estado, mas nenhum nó os preenche. `src/arbitration/schemas/verdict.py` ainda está vazio.
+- **Implementado:** identificação de contradições explícitas entre problemas relatados por críticos diferentes e decisão sobre necessidade de adjudicação. A interpretação das descrições em texto livre usa `gpt-5-mini`; quando não há problemas de pelo menos dois críticos, o detector retorna sem chamar o modelo.
+- **Ainda não implementado:** agente adjudicador e veredito final. `src/arbitration/schemas/verdict.py` ainda está vazio.
 - **Ainda não integrado:** recuperação de contexto (RAG), ferramentas e persistência; os diretórios reservados para essas partes não contêm implementação.
 - **Limitação conhecida:** o nó de consistência passa os argumentos ao construtor do prompt em ordem inversa à assinatura da função. Isso pode trocar pergunta e resposta no prompt enviado ao modelo. A execução também depende da disponibilidade das APIs e dos modelos configurados.

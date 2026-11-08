@@ -9,6 +9,7 @@ from src.nodes.critics import (
 )
 from src.nodes.parse_input import parse_input
 from src.nodes.collect_critiques import collect_critiques
+from src.nodes.detect_disagreements import detect_disagreements
 
 
 def run_agents_graph() -> CompiledStateGraph:
@@ -19,6 +20,7 @@ def run_agents_graph() -> CompiledStateGraph:
     graph.add_node("logic_critic", logic_critic)
     graph.add_node("completeness_critic", completeness_critic)
     graph.add_node("collect_critiques", collect_critiques)
+    graph.add_node("detect_disagreements", detect_disagreements)
 
     graph.add_edge(START, "parse_input")
 
@@ -30,6 +32,7 @@ def run_agents_graph() -> CompiledStateGraph:
         ["accuracy_critic", "logic_critic", "completeness_critic"],
         "collect_critiques",
     )
-    graph.add_edge("collect_critiques", END)
+    graph.add_edge("collect_critiques", "detect_disagreements")
+    graph.add_edge("detect_disagreements", END)
 
     return graph.compile()

@@ -23,6 +23,10 @@ def main():
         print(f"Confidence: {critique.confidence}")
         print(f"Issues: {critique.issues}")
 
+    print("\n=== DISAGREEMENT DETECTION ===")
+    print(f"Disagreements: {result['disagreements']}")
+    print(f"Requires adjudication: {result['requires_adjudication']}")
+
 
 if __name__ == "__main__":
     main()
