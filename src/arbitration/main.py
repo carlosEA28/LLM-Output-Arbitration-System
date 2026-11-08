@@ -7,7 +7,7 @@ def main():
 
     initial_state = {
         "original_question": "What is the capital of France?",
-        "generated_output": "The capital of France is Berlin.",
+        "generated_output": "The capital of France is Paris.",
         "critiques": [],
         "failed_critics": [],
     }
