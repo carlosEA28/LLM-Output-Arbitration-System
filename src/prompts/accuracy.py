@@ -24,6 +24,8 @@ class AccuracyPrompts:
     4 = Mostly accurate, with minor concerns
     5 = No factual issues identified
 
+    Score 5 if and only if issues is empty. If an issue is present, score below 5.
+
     Provide a structured critique containing:
     - dimension: accuracy
     - score: integer between 1 and 5

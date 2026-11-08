@@ -24,9 +24,11 @@ class LogicCriticTests(unittest.TestCase):
 
             def invoke(self, messages):
                 self.test_case.messages = messages
+                self.test_case.invoke_count += 1
                 return response
 
         FakeGemini.test_case = self
+        self.invoke_count = 0
         with patch.object(critics, "ChatGoogleGenerativeAI", FakeGemini):
             state = parse_input({
                 "original_question": f" {QUESTION} ",
@@ -75,10 +77,13 @@ class LogicCriticTests(unittest.TestCase):
             )],
         )
 
-        self.assertEqual(
-            self.run_critic(response, "The capital is Berlin."),
-            {"failed_critics": ["logic_critic"]},
-        )
+        with self.assertLogs(critics.logger, level="WARNING") as logs:
+            result = self.run_critic(response, "The capital is Berlin.")
+        self.assertEqual(result, {"failed_critics": ["logic_critic"]})
+        self.assertEqual(self.invoke_count, 1)
+        self.assertIn("category=invalid_evaluation", logs.output[0])
+        self.assertIn("exception=InvalidEvaluationError", logs.output[0])
+        self.assertNotIn("The capital is Berlin.", logs.output[0])
 
 
 if __name__ == "__main__":

@@ -34,6 +34,8 @@ class CompletenessPrompts:
     4 = Most requirements are addressed, with minor omissions.
     5 = All explicit requirements are addressed, regardless of factual correctness.
 
+    Score 5 if and only if issues is empty. If an issue is present, score below 5.
+
     Calibration examples:
 
     Example 1:

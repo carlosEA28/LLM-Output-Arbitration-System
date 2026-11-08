@@ -29,6 +29,8 @@ class ConsistencyPrompts:
     4 = Mostly consistent reasoning with minor issues
     5 = No logical inconsistencies identified
 
+    Score 5 if and only if issues is empty. If an issue is present, score below 5.
+
     If there are no logical issues, return score 5 with an empty issues list. Lower confidence if the response contains too little reasoning to assess deeply.
 
     Provide a structured critique containing:
