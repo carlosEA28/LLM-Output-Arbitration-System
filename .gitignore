@@ -13,3 +13,4 @@ wheels/
 .agents
 openspec
 TODO.txt
+.pytest_cache/
