@@ -1,0 +1,1281 @@
+{
+  "created_at": "2026-11-09T12:54:17.401111+00:00",
+  "total": 16,
+  "passed": 5,
+  "failed": 11,
+  "pass_rate": 0.3125,
+  "evaluation_method": "deterministic baseline: score ranges + issue dimension/severity presence (NOT semantic matching)",
+  "cases": [
+    {
+      "id": "eval_001",
+      "scenario": "Correct short factual answer",
+      "passed": true,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "no_unexpected_issues",
+          "passed": true,
+          "details": "observed 0 issue(s)"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 5,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [],
+      "verdict": {
+        "overall_score": 10,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 0 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 15.728
+    },
+    {
+      "id": "eval_002",
+      "scenario": "Incorrect fact but complete answer",
+      "passed": true,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=1; expected=1..2"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": true,
+          "details": "expected accuracy/critical; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 1,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "The capital of France is Berlin.",
+          "description": "Incorrect: Berlin is the capital of Germany. The capital of France is Paris.",
+          "severity": "critical"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "The capital of France is Berlin.",
+            "description": "Incorrect: Berlin is the capital of Germany. The capital of France is Paris.",
+            "severity": "critical"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 7.239
+    },
+    {
+      "id": "eval_003",
+      "scenario": "Factually correct but incomplete list",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": false,
+          "details": "actual=1; expected=4..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=3; expected=1..3"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": true,
+          "details": "expected completeness/high; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 1,
+        "logic": 5,
+        "completeness": 3
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "Red and green.",
+          "description": "For additive color (light), the three primary colors are red, green, and blue (RGB). The response lists only two and omits blue, making the identification of the primary colors of light factually incorrect.",
+          "severity": "critical"
+        },
+        {
+          "dimension": "completeness",
+          "quote": "Red and green.",
+          "description": "The user explicitly requested the three primary colors of light, but the response lists only two colors (red and green) and omits the third required color.",
+          "severity": "high"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Red and green.",
+            "description": "For additive color (light), the three primary colors are red, green, and blue (RGB). The response lists only two and omits blue, making the identification of the primary colors of light factually incorrect.",
+            "severity": "critical"
+          },
+          {
+            "quote": "Red and green.",
+            "description": "The user explicitly requested the three primary colors of light, but the response lists only two colors (red and green) and omits the third required color.",
+            "severity": "high"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 2 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 11.779
+    },
+    {
+      "id": "eval_004",
+      "scenario": "Internally contradictory response",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=2; expected=1..3"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": false,
+          "details": "received 0 critique(s)"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=3..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected logic/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "expected_issue_2_dimension_severity",
+          "passed": true,
+          "details": "expected accuracy/high; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "inconclusive"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 2,
+        "logic": null,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "However, 8 is not divisible by 2",
+          "description": "This claim is false. 8 divided by 2 equals 4, so 8 is divisible by 2. By definition, even numbers are integers divisible by 2.",
+          "severity": "critical"
+        },
+        {
+          "dimension": "accuracy",
+          "quote": "so it is odd.",
+          "description": "This conclusion is incorrect. Since 8 is divisible by 2, it is even, not odd.",
+          "severity": "critical"
+        },
+        {
+          "dimension": "accuracy",
+          "quote": "Yes, 8 is even because it is divisible by 2. However, 8 is not divisible by 2, so it is odd.",
+          "description": "The response contains a direct contradiction—first stating 8 is even because it is divisible by 2, then claiming it is not divisible by 2 and is odd. This internal inconsistency is misleading and undermines factual accuracy.",
+          "severity": "high"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.5,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "However, 8 is not divisible by 2",
+            "description": "This claim is false. 8 divided by 2 equals 4, so 8 is divisible by 2. By definition, even numbers are integers divisible by 2.",
+            "severity": "critical"
+          },
+          {
+            "quote": "so it is odd.",
+            "description": "This conclusion is incorrect. Since 8 is divisible by 2, it is even, not odd.",
+            "severity": "critical"
+          },
+          {
+            "quote": "Yes, 8 is even because it is divisible by 2. However, 8 is not divisible by 2, so it is odd.",
+            "description": "The response contains a direct contradiction—first stating 8 is even because it is divisible by 2, then claiming it is not divisible by 2 and is odd. This internal inconsistency is misleading and undermines factual accuracy.",
+            "severity": "high"
+          }
+        ],
+        "summary": "Evaluated 2 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 3 unverified issues.",
+        "status": "inconclusive"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 22.276
+    },
+    {
+      "id": "eval_005",
+      "scenario": "Relevant but does not answer question",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=4; expected=4..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=1; expected=1..2"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected completeness/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 4,
+        "logic": 5,
+        "completeness": 1
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "\"Multiplication is repeated addition\"",
+          "description": "This statement is an overgeneralization. While multiplication of natural numbers can be interpreted as repeated addition, multiplication in broader contexts (e.g., real numbers with non-integer factors, matrices, vectors, abstract algebraic structures) is not strictly repeated addition. Without qualification, this can be misleading.",
+          "severity": "low"
+        },
+        {
+          "dimension": "completeness",
+          "quote": "Multiplication is repeated addition and is useful in arithmetic.",
+          "description": "The user explicitly asked for the result of 'What is 12 multiplied by 4?' which requires the numeric product. The response only gives a general statement about multiplication and does not provide the requested numeric answer (the product), so the primary requirement is unmet.",
+          "severity": "critical"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "\"Multiplication is repeated addition\"",
+            "description": "This statement is an overgeneralization. While multiplication of natural numbers can be interpreted as repeated addition, multiplication in broader contexts (e.g., real numbers with non-integer factors, matrices, vectors, abstract algebraic structures) is not strictly repeated addition. Without qualification, this can be misleading.",
+            "severity": "low"
+          },
+          {
+            "quote": "Multiplication is repeated addition and is useful in arithmetic.",
+            "description": "The user explicitly asked for the result of 'What is 12 multiplied by 4?' which requires the numeric product. The response only gives a general statement about multiplication and does not provide the requested numeric answer (the product), so the primary requirement is unmet.",
+            "severity": "critical"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 2 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 8.966
+    },
+    {
+      "id": "eval_006",
+      "scenario": "Wrong arithmetic with coherent reasoning",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=1; expected=1..2"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected accuracy/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 1,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "\"7 multiplied by 6 equals 45.\"",
+          "description": "Incorrect arithmetic. The correct product of 7 and 6 is 42, not 45.",
+          "severity": "critical"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "\"7 multiplied by 6 equals 45.\"",
+            "description": "Incorrect arithmetic. The correct product of 7 and 6 is 42, not 45.",
+            "severity": "critical"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 9.539
+    },
+    {
+      "id": "eval_007",
+      "scenario": "Correct explanation",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": false,
+          "details": "received 0 critique(s)"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "no_unexpected_issues",
+          "passed": true,
+          "details": "observed 0 issue(s)"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "inconclusive"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 5,
+        "logic": null,
+        "completeness": 5
+      },
+      "observed_issues": [],
+      "verdict": {
+        "overall_score": 10,
+        "confidence": 0.5,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [],
+        "summary": "Evaluated 2 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 0 unverified issues.",
+        "status": "inconclusive"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 5.75
+    },
+    {
+      "id": "eval_008",
+      "scenario": "Incomplete multi-part instructions",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=3; expected=1..3"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected completeness/medium; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 5,
+        "logic": 5,
+        "completeness": 3
+      },
+      "observed_issues": [
+        {
+          "dimension": "completeness",
+          "quote": "Enable multi-factor authentication.",
+          "description": "The original question explicitly requested two ways to reduce password account takeover risk. The generated response supplies only one method (MFA) and does not provide a second method as requested.",
+          "severity": "high"
+        }
+      ],
+      "verdict": {
+        "overall_score": 8,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Enable multi-factor authentication.",
+            "description": "The original question explicitly requested two ways to reduce password account takeover risk. The generated response supplies only one method (MFA) and does not provide a second method as requested.",
+            "severity": "high"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 10.048
+    },
+    {
+      "id": "eval_009",
+      "scenario": "Partially wrong multi-part response",
+      "passed": true,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=3; expected=1..3"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": true,
+          "details": "expected accuracy/high; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 3,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "Germany: Munich.",
+          "description": "Incorrect national capital. The capital of Germany is Berlin, not Munich. Munich is the capital of the state of Bavaria.",
+          "severity": "high"
+        }
+      ],
+      "verdict": {
+        "overall_score": 8,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Germany: Munich.",
+            "description": "Incorrect national capital. The capital of Germany is Berlin, not Munich. Munich is the capital of the state of Bavaria.",
+            "severity": "high"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 8.427
+    },
+    {
+      "id": "eval_010",
+      "scenario": "Unverifiable private business claim",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=3; expected=1..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": false,
+          "details": "received 0 critique(s)"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": true,
+          "details": "expected accuracy/medium; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "inconclusive"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 3,
+        "logic": null,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "The company’s revenue grew by 37% in 2025.",
+          "description": "This is a precise quantitative claim attributed to the company’s internal 2025 records, but no reference context or evidence is provided to verify it. With the available information, the claim is unsupported/unverifiable rather than demonstrably false.",
+          "severity": "medium"
+        }
+      ],
+      "verdict": {
+        "overall_score": 8,
+        "confidence": 0.5,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "The company’s revenue grew by 37% in 2025.",
+            "description": "This is a precise quantitative claim attributed to the company’s internal 2025 records, but no reference context or evidence is provided to verify it. With the available information, the claim is unsupported/unverifiable rather than demonstrably false.",
+            "severity": "medium"
+          }
+        ],
+        "summary": "Evaluated 2 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "inconclusive"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 11.59
+    },
+    {
+      "id": "eval_011",
+      "scenario": "Correct answer with irrelevant addition",
+      "passed": true,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=4; expected=4..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 4,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "Bananas are yellow.",
+          "description": "This is an overgeneralization. While many common ripe bananas (e.g., Cavendish) are yellow, bananas can be green when unripe, brown/black when overripe, and some varieties (e.g., red bananas) are not yellow. The statement could be misleading as an absolute claim.",
+          "severity": "low"
+        }
+      ],
+      "verdict": {
+        "overall_score": 9,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Bananas are yellow.",
+            "description": "This is an overgeneralization. While many common ripe bananas (e.g., Cavendish) are yellow, bananas can be green when unripe, brown/black when overripe, and some varieties (e.g., red bananas) are not yellow. The statement could be misleading as an absolute claim.",
+            "severity": "low"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 10.789
+    },
+    {
+      "id": "eval_012",
+      "scenario": "Direct contradiction in comparison",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=3; expected=1..3"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=1; expected=1..2"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected logic/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "expected_issue_2_dimension_severity",
+          "passed": false,
+          "details": "expected accuracy/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 3,
+        "logic": 1,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "Therefore 7 is greater than 10.",
+          "description": "Factually incorrect. In standard arithmetic, 7 is less than 10, not greater (7 < 10).",
+          "severity": "critical"
+        },
+        {
+          "dimension": "accuracy",
+          "quote": "10 is greater than 7. Therefore 7 is greater than 10.",
+          "description": "The response is self-contradictory, asserting both 10 > 7 (true) and 7 > 10 (false). This contradiction is misleading and undermines factual accuracy.",
+          "severity": "medium"
+        },
+        {
+          "dimension": "logic",
+          "quote": "10 is greater than 7. Therefore 7 is greater than 10.",
+          "description": "The conclusion that 7 is greater than 10 directly contradicts the premise that 10 is greater than 7, representing a fundamentally invalid logical inference.",
+          "severity": "critical"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Therefore 7 is greater than 10.",
+            "description": "Factually incorrect. In standard arithmetic, 7 is less than 10, not greater (7 < 10).",
+            "severity": "critical"
+          },
+          {
+            "quote": "10 is greater than 7. Therefore 7 is greater than 10.",
+            "description": "The response is self-contradictory, asserting both 10 > 7 (true) and 7 > 10 (false). This contradiction is misleading and undermines factual accuracy.",
+            "severity": "medium"
+          },
+          {
+            "quote": "10 is greater than 7. Therefore 7 is greater than 10.",
+            "description": "The conclusion that 7 is greater than 10 directly contradicts the premise that 10 is greater than 7, representing a fundamentally invalid logical inference.",
+            "severity": "critical"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 3 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 30.421
+    },
+    {
+      "id": "eval_013",
+      "scenario": "Unnecessary refusal for safe request",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=3; expected=3..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=1; expected=1..2"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected completeness/high; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 3,
+        "logic": 5,
+        "completeness": 1
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "I cannot help with translations.",
+          "description": "This is an unsupported blanket claim about the assistant’s capabilities. With no evidence or context indicating a restriction, the statement is unverifiable and potentially misleading, as many assistants can perform simple translations such as translating “good morning” to Portuguese.",
+          "severity": "medium"
+        },
+        {
+          "dimension": "completeness",
+          "quote": "I cannot help with translations.",
+          "description": "The user explicitly requested a translation of the phrase \"good morning\" into Portuguese. The response does not provide the requested translation and instead refuses, so the primary and only explicit requirement is entirely unaddressed.",
+          "severity": "critical"
+        }
+      ],
+      "verdict": {
+        "overall_score": 4,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "I cannot help with translations.",
+            "description": "This is an unsupported blanket claim about the assistant’s capabilities. With no evidence or context indicating a restriction, the statement is unverifiable and potentially misleading, as many assistants can perform simple translations such as translating “good morning” to Portuguese.",
+            "severity": "medium"
+          },
+          {
+            "quote": "I cannot help with translations.",
+            "description": "The user explicitly requested a translation of the phrase \"good morning\" into Portuguese. The response does not provide the requested translation and instead refuses, so the primary and only explicit requirement is entirely unaddressed.",
+            "severity": "critical"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 2 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 17.343
+    },
+    {
+      "id": "eval_014",
+      "scenario": "Correct multi-step calculation",
+      "passed": true,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "no_unexpected_issues",
+          "passed": true,
+          "details": "observed 0 issue(s)"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 5,
+        "logic": 5,
+        "completeness": 5
+      },
+      "observed_issues": [],
+      "verdict": {
+        "overall_score": 10,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 0 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 23.942
+    },
+    {
+      "id": "eval_015",
+      "scenario": "Missing requested justification",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "logic_score_range",
+          "passed": true,
+          "details": "actual=5; expected=5..5"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=3; expected=2..3"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": false,
+          "details": "expected completeness/medium; found 0 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "assessed"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 5,
+        "logic": 5,
+        "completeness": 3
+      },
+      "observed_issues": [
+        {
+          "dimension": "completeness",
+          "quote": "Yes.",
+          "description": "The response provides the required yes/no answer but omits the required explanation. The original question explicitly asked to 'Answer yes or no and explain why,' and the explanation of why 15 is divisible by 3 is missing.",
+          "severity": "high"
+        }
+      ],
+      "verdict": {
+        "overall_score": 8,
+        "confidence": 0.75,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "Yes.",
+            "description": "The response provides the required yes/no answer but omits the required explanation. The original question explicitly asked to 'Answer yes or no and explain why,' and the explanation of why 15 is divisible by 3 is missing.",
+            "severity": "high"
+          }
+        ],
+        "summary": "Evaluated 3 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "assessed"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 14.393
+    },
+    {
+      "id": "eval_016",
+      "scenario": "Hallucinated citation",
+      "passed": false,
+      "checks": [
+        {
+          "name": "accuracy_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "accuracy_score_range",
+          "passed": true,
+          "details": "actual=3; expected=3..5"
+        },
+        {
+          "name": "logic_exactly_once",
+          "passed": false,
+          "details": "received 0 critique(s)"
+        },
+        {
+          "name": "completeness_exactly_once",
+          "passed": true,
+          "details": "received 1 critique(s)"
+        },
+        {
+          "name": "completeness_score_range",
+          "passed": true,
+          "details": "actual=5; expected=4..5"
+        },
+        {
+          "name": "expected_issue_1_dimension_severity",
+          "passed": true,
+          "details": "expected accuracy/medium; found 1 candidate(s); meaning NOT checked"
+        },
+        {
+          "name": "valid_verdict_present",
+          "passed": true,
+          "details": "inconclusive"
+        }
+      ],
+      "observed_scores": {
+        "accuracy": 3,
+        "logic": null,
+        "completeness": 5
+      },
+      "observed_issues": [
+        {
+          "dimension": "accuracy",
+          "quote": "according to [Source: imaginary-math-journal-2025]",
+          "description": "The citation appears fabricated or unverifiable. While the numerical claim (5 squared is 25) is correct, attributing it to an \"imaginary-math-journal-2025\" is an unsupported claim and potentially misleading.",
+          "severity": "medium"
+        }
+      ],
+      "verdict": {
+        "overall_score": 8,
+        "confidence": 0.5,
+        "confirmed_issues": [],
+        "dismissed_issues": [],
+        "unverified_issues": [
+          {
+            "quote": "according to [Source: imaginary-math-journal-2025]",
+            "description": "The citation appears fabricated or unverifiable. While the numerical claim (5 squared is 25) is correct, attributing it to an \"imaginary-math-journal-2025\" is an unsupported claim and potentially misleading.",
+            "severity": "medium"
+          }
+        ],
+        "summary": "Evaluated 2 of 3 dimensions. Found 0 confirmed, 0 dismissed, and 1 unverified issues.",
+        "status": "inconclusive"
+      },
+      "adjudication": null,
+      "requires_adjudication": false,
+      "elapsed_seconds": 8.765
+    }
+  ]
+}

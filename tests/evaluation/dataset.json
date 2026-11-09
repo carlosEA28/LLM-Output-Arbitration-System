@@ -1,0 +1,459 @@
+{
+  "dataset_name": "llm_output_arbitration_eval_v1",
+  "version": "1.0",
+  "language": "en",
+  "score_scale": "1-5 per dimension",
+  "evaluation_notes": [
+    "Expected score ranges are guidance for evaluation, not deterministic pytest assertions against live LLM calls.",
+    "Expected issues describe semantic expectations; do not compare issue descriptions by exact string.",
+    "An empty expected_issues array means no significant issue is expected.",
+    "Optional issues are not mandatory for a passing evaluation.",
+    "A score range of 1-5 for accuracy means unknown or unsupported, not known false.",
+    "This dataset supplies no external retrieval evidence. Private claims should remain undecided."
+  ],
+  "cases": [
+    {
+      "id": "eval_001",
+      "scenario": "Correct short factual answer",
+      "original_question": "What is the capital of France?",
+      "generated_output": "Paris.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 5,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 5,
+          "max": 5
+        }
+      },
+      "expected_issues": [],
+      "description": "Baseline: concise, correct and fully responsive."
+    },
+    {
+      "id": "eval_002",
+      "scenario": "Incorrect fact but complete answer",
+      "original_question": "What is the capital of France?",
+      "generated_output": "The capital of France is Berlin.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 2
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "accuracy",
+          "severity": "critical",
+          "description": "Berlin is not the capital of France; Paris is."
+        }
+      ],
+      "description": "Distinguish factual error from relevance and logical consistency."
+    },
+    {
+      "id": "eval_003",
+      "scenario": "Factually correct but incomplete list",
+      "original_question": "Name the three primary colors of light.",
+      "generated_output": "Red and green.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 4,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "high",
+          "description": "Missing blue, the third additive primary color."
+        }
+      ],
+      "description": "Detect an omitted required item without falsely alleging an error."
+    },
+    {
+      "id": "eval_004",
+      "scenario": "Internally contradictory response",
+      "original_question": "Is 8 an even number? Explain briefly.",
+      "generated_output": "Yes, 8 is even because it is divisible by 2. However, 8 is not divisible by 2, so it is odd.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 3
+        },
+        "logic": {
+          "min": 1,
+          "max": 2
+        },
+        "completeness": {
+          "min": 3,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "logic",
+          "severity": "high",
+          "description": "The response simultaneously says 8 is divisible and not divisible by 2, and both even and odd."
+        },
+        {
+          "dimension": "accuracy",
+          "severity": "high",
+          "description": "The response incorrectly claims that 8 is odd and not divisible by 2."
+        }
+      ],
+      "description": "Catch contradictions as well as factual inaccuracies."
+    },
+    {
+      "id": "eval_005",
+      "scenario": "Relevant but does not answer question",
+      "original_question": "What is 12 multiplied by 4?",
+      "generated_output": "Multiplication is repeated addition and is useful in arithmetic.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 4,
+          "max": 5
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "high",
+          "description": "Fails to provide the requested product, 48."
+        }
+      ],
+      "description": "Distinguish generally accurate background from completing the task."
+    },
+    {
+      "id": "eval_006",
+      "scenario": "Wrong arithmetic with coherent reasoning",
+      "original_question": "What is 7 multiplied by 6?",
+      "generated_output": "7 multiplied by 6 equals 45.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 2
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "accuracy",
+          "severity": "high",
+          "description": "The correct product is 42, not 45."
+        }
+      ],
+      "description": "Mathematical falsehood should not automatically imply internal contradiction."
+    },
+    {
+      "id": "eval_007",
+      "scenario": "Correct explanation",
+      "original_question": "Why is 9 an odd number?",
+      "generated_output": "9 is odd because dividing it by 2 leaves a remainder of 1.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 5,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 5,
+          "max": 5
+        }
+      },
+      "expected_issues": [],
+      "description": "Baseline for a short reasoning answer."
+    },
+    {
+      "id": "eval_008",
+      "scenario": "Incomplete multi-part instructions",
+      "original_question": "Give two ways to reduce password account takeover risk.",
+      "generated_output": "Enable multi-factor authentication.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 4,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "medium",
+          "description": "Only one of the two requested ways is supplied."
+        }
+      ],
+      "description": "Check cardinality of requested output."
+    },
+    {
+      "id": "eval_009",
+      "scenario": "Partially wrong multi-part response",
+      "original_question": "Name the capitals of France and Germany.",
+      "generated_output": "France: Paris. Germany: Munich.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 3
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "accuracy",
+          "severity": "high",
+          "description": "The capital of Germany is Berlin, not Munich."
+        }
+      ],
+      "description": "Answer can satisfy structure while containing one false item."
+    },
+    {
+      "id": "eval_010",
+      "scenario": "Unverifiable private business claim",
+      "original_question": "According to the company’s internal 2025 records, what percentage did revenue grow?",
+      "generated_output": "The company’s revenue grew by 37% in 2025.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 5
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "accuracy",
+          "severity": "medium",
+          "description": "The 37% claim cannot be verified without the referenced internal records. This is uncertain, not proven false.",
+          "expected_disposition": "undecided"
+        }
+      ],
+      "description": "No internal records are provided. Do not treat unsupported claims as demonstrated falsehoods."
+    },
+    {
+      "id": "eval_011",
+      "scenario": "Correct answer with irrelevant addition",
+      "original_question": "What is 2 + 2?",
+      "generated_output": "2 + 2 = 4. Bananas are yellow.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 4,
+          "max": 5
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "low",
+          "description": "Contains irrelevant information; may or may not warrant an issue depending on rubric.",
+          "optional": true
+        }
+      ],
+      "description": "Optional minor relevance issue; avoid forcing false consensus."
+    },
+    {
+      "id": "eval_012",
+      "scenario": "Direct contradiction in comparison",
+      "original_question": "Which is greater, 10 or 7?",
+      "generated_output": "10 is greater than 7. Therefore 7 is greater than 10.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 1,
+          "max": 3
+        },
+        "logic": {
+          "min": 1,
+          "max": 2
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "logic",
+          "severity": "high",
+          "description": "The conclusion contradicts the preceding comparison."
+        },
+        {
+          "dimension": "accuracy",
+          "severity": "high",
+          "description": "The response falsely concludes that 7 exceeds 10."
+        }
+      ],
+      "description": "Identify explicit contradictory conclusion."
+    },
+    {
+      "id": "eval_013",
+      "scenario": "Unnecessary refusal for safe request",
+      "original_question": "Translate “good morning” into Portuguese.",
+      "generated_output": "I cannot help with translations.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 3,
+          "max": 5
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "high",
+          "description": "Does not provide the requested translation (bom dia)."
+        }
+      ],
+      "description": "Test failure to fulfill an ordinary safe request."
+    },
+    {
+      "id": "eval_014",
+      "scenario": "Correct multi-step calculation",
+      "original_question": "A box has 3 rows of 4 apples. How many apples are there?",
+      "generated_output": "There are 12 apples, since 3 × 4 = 12.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 5,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 5,
+          "max": 5
+        }
+      },
+      "expected_issues": [],
+      "description": "Correct factual, logical and complete multi-step answer."
+    },
+    {
+      "id": "eval_015",
+      "scenario": "Missing requested justification",
+      "original_question": "Is 15 divisible by 3? Answer yes or no and explain why.",
+      "generated_output": "Yes.",
+      "expected_scores": {
+        "accuracy": {
+          "min": 5,
+          "max": 5
+        },
+        "logic": {
+          "min": 5,
+          "max": 5
+        },
+        "completeness": {
+          "min": 2,
+          "max": 3
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "completeness",
+          "severity": "medium",
+          "description": "Gives the correct yes/no answer but omits the requested explanation."
+        }
+      ],
+      "description": "Check completeness beyond bare answer correctness."
+    },
+    {
+      "id": "eval_016",
+      "scenario": "Hallucinated citation",
+      "original_question": "What is 5 squared?",
+      "generated_output": "5 squared is 25, according to [Source: imaginary-math-journal-2025].",
+      "expected_scores": {
+        "accuracy": {
+          "min": 3,
+          "max": 5
+        },
+        "logic": {
+          "min": 4,
+          "max": 5
+        },
+        "completeness": {
+          "min": 4,
+          "max": 5
+        }
+      },
+      "expected_issues": [
+        {
+          "dimension": "accuracy",
+          "severity": "medium",
+          "description": "Cites a source that is not provided or verifiable in the task; the arithmetic itself is correct.",
+          "expected_disposition": "undecided"
+        }
+      ],
+      "description": "Test whether unsupported attribution is distinguished from correct mathematical content."
+    }
+  ]
+}
