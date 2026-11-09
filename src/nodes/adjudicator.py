@@ -11,6 +11,35 @@ from src.prompts.adjudicator import AdjudicatorPrompts
 logger = logging.getLogger(__name__)
 
 
+def validate_adjudication(
+    result: AdjudicationSchema,
+    critiques: list,
+) -> None:
+    available = {
+        issue.model_dump_json()
+        for critique in critiques
+        for issue in critique.issues
+    }
+
+    confirmed = {
+        issue.model_dump_json()
+        for issue in result.confirmed_issues
+    }
+
+    dismissed = {
+        item.issue.model_dump_json()
+        for item in result.dismissed_issues
+    }
+
+    if not (confirmed | dismissed) <= available:
+        raise ValueError("Adjudication contains unknown issues")
+
+    if confirmed & dismissed:
+        raise ValueError(
+            "An issue cannot be confirmed and dismissed"
+        )
+
+
 def adjudicator(state: ArbitrationState) -> dict:
     critiques = state.get("critiques", [])
 
@@ -49,27 +78,7 @@ def adjudicator(state: ArbitrationState) -> dict:
         if not isinstance(result, AdjudicationSchema):
             raise ValueError("Invalid adjudication response")
 
-        available = {
-            issue.model_dump_json()
-            for critique in critiques
-            for issue in critique.issues
-        }
-
-        confirmed = {
-            issue.model_dump_json()
-            for issue in result.confirmed_issues
-        }
-
-        dismissed = {
-            item.issue.model_dump_json()
-            for item in result.dismissed_issues
-        }
-
-        if not (confirmed | dismissed) <= available:
-            raise ValueError("Adjudication contains unknown issues")
-
-        if confirmed & dismissed:
-            raise ValueError("An issue cannot be confirmed and dismissed")
+        validate_adjudication(result, critiques)
 
         return {"adjudication": result}
 

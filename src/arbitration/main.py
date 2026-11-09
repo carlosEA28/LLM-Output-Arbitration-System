@@ -2,6 +2,47 @@
 from src.arbitration.graph import run_agents_graph
 
 
+from src.nodes.adjudicator import adjudicator
+from src.arbitration.schemas.critique import (
+    CritiqueSchema,
+    IssueSchema,
+    DimensionsEnum,
+    SeverityEnum,
+)
+
+
+def test_adjudicator():
+    state = {
+        "original_question": "What is the capital of France?",
+        "generated_output": "The capital of France is Berlin.",
+        "critiques": [
+            CritiqueSchema(
+                dimension=DimensionsEnum.accuracy,
+                score=5,
+                issues=[
+                    IssueSchema(
+                        quote="The capital of France is Berlin.",
+                        description="The capital of France is Paris.",
+                        severity=SeverityEnum.high,
+                    )
+                ],
+                confidence=0.9,
+            )
+        ],
+        "disagreements": [
+            "accuracy: High score despite identified issues."
+        ],
+        "requires_adjudication": True,
+        "failed_critics": [],
+    }
+
+    result = adjudicator(state)
+
+    print("\n=== ADJUDICATOR TEST ===")
+    print(result["adjudication"])
+
+
+
 def main():
     graph = run_agents_graph()
 
@@ -40,4 +81,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    test_adjudicator()
