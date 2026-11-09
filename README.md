@@ -1,141 +1,141 @@
 # LLM Output Arbitration System
 
-Protótipo em Python para avaliar uma resposta gerada por um modelo de linguagem em relação à pergunta original. O projeto usa um grafo LangGraph para executar três críticos em paralelo: exatidão factual, consistência lógica e completude. Cada crítico retorna uma avaliação estruturada com nota, problemas encontrados e grau de confiança.
+A Python prototype for evaluating a language model's generated answer against the original question. The project uses a LangGraph graph to run three critics in parallel: factual accuracy, logical consistency, and completeness. Each critic returns a structured evaluation with a score, identified issues, and a confidence level.
 
-O grafo reúne três críticas, detecta divergências, adjudica conflitos explícitos quando necessário e produz um veredito estruturado.
+The graph collects the three critiques, detects disagreements, adjudicates explicit conflicts when needed, and produces a structured verdict.
 
-## Como funciona hoje
+## How it works
 
 ```mermaid
 flowchart LR
-    A["Pergunta original + resposta gerada"] --> B[Validação e limpeza da entrada]
-    B --> C[Crítico de exatidão factual]
-    B --> D[Crítico de consistência lógica]
-    B --> E[Crítico de completude]
-    C --> F[Conferência das críticas]
+    A["Original question + generated answer"] --> B[Input validation and trimming]
+    B --> C[Factual accuracy critic]
+    B --> D[Logical consistency critic]
+    B --> E[Completeness critic]
+    C --> F[Critique collection and validation]
     D --> F
     E --> F
-    F --> G[Detecção de divergências]
-    G -->|requires_adjudication = true| H[Adjudicador]
-    G -->|requires_adjudication = false| I[Síntese do veredito]
+    F --> G[Disagreement detection]
+    G -->|requires_adjudication = true| H[Adjudicator]
+    G -->|requires_adjudication = false| I[Verdict synthesis]
     H --> I
-    I --> J[Fim]
+    I --> J[End]
 ```
 
-1. `parse_input` remove espaços nas extremidades e rejeita pergunta ou resposta vazia.
-2. Os três nós críticos recebem a mesma entrada e executam chamadas a modelos de linguagem em paralelo.
-3. O estado do grafo acumula as respostas no campo `critiques`. Cada crítico faz até duas tentativas apenas para falhas transitórias (timeout, conexão, limite de taxa ou erro de servidor). Após uma falha definitiva, registra seu nome em `failed_critics` sem interromper os demais.
-4. `collect_critiques` identifica dimensões ausentes ou duplicadas e define `critiques_complete`. O resultado é completo apenas quando as três dimensões aparecem uma vez cada e não há críticos com falha.
-5. `detect_disagreements` compara afirmações explícitas nos problemas descritos por críticos diferentes. Quando pelo menos dois críticos relatam problemas, uma avaliação estruturada procura afirmações incompatíveis sobre o mesmo aspecto da resposta; referências inválidas ou repetidas são descartadas. Apenas contradições confirmadas entram em `disagreements` e ativam `requires_adjudication`. Notas diferentes, um problema sem menção equivalente por outro crítico e diferenças entre dimensões não bastam para isso.
-6. O grafo envia o estado ao `adjudicator` quando `requires_adjudication` é verdadeiro; ele usa uma avaliação estruturada da OpenAI para confirmar ou descartar problemas relatados pelos críticos. Sem divergência, segue diretamente para `synthesize_verdict`.
-7. `synthesize_verdict` produz um `VerdictSchema` sem nova chamada ao modelo. Apenas problemas confirmados explicitamente pelo adjudicador entram em `confirmed_issues`; os descartados entram em `dismissed_issues` e os demais em `unverified_issues`. Sem adjudicação, todos os problemas dos críticos ficam em `unverified_issues`. A confiança é reduzida quando faltam avaliações ou existem falhas ou dimensões duplicadas.
+1. `parse_input` trims leading and trailing whitespace and rejects an empty question or answer.
+2. The three critic nodes receive the same input and call language models in parallel.
+3. The graph state accumulates their responses in `critiques`. Each critic makes up to two attempts for transient failures only (timeouts, connection errors, rate limits, or server errors). After a definitive failure, it records its name in `failed_critics` without stopping the others.
+4. `collect_critiques` identifies missing or duplicate dimensions and sets `critiques_complete`. The result is complete only when each of the three dimensions appears exactly once and no critic has failed.
+5. `detect_disagreements` compares explicit claims in issues reported by different critics. When at least two critics report issues, a structured evaluation looks for incompatible claims about the same aspect of the answer; invalid or duplicate references are discarded. Only confirmed contradictions enter `disagreements` and set `requires_adjudication`. Different scores, an issue that another critic does not mention, and differences between dimensions are not sufficient.
+6. The graph sends the state to `adjudicator` when `requires_adjudication` is true. It uses a structured OpenAI evaluation to confirm or dismiss issues reported by the critics. Without a disagreement, the graph goes directly to `synthesize_verdict`.
+7. `synthesize_verdict` produces a `VerdictSchema` without another model call. Only issues explicitly confirmed by the adjudicator enter `confirmed_issues`; dismissed issues enter `dismissed_issues`, and the rest enter `unverified_issues`. Without adjudication, all critic issues remain in `unverified_issues`. Confidence decreases when evaluations are missing or when critics fail or dimensions are duplicated.
 
-Quando um crítico falha, as avaliações dos demais permanecem em `critiques`, a dimensão ausente aparece em `missing_dimensions` e `critiques_complete` é `False`. Quando todos falham, `critiques` fica vazio e o veredito tem `status="inconclusive"`, confiança zero e nenhum problema confirmado. A nota obrigatória 1 é apenas um marcador nesse caso, não uma avaliação da resposta.
+When a critic fails, the other evaluations remain in `critiques`, the missing dimension appears in `missing_dimensions`, and `critiques_complete` is `False`. When all critics fail, `critiques` is empty and the verdict has `status="inconclusive"`, zero confidence, and no confirmed issues. The required score of 1 is only a placeholder in that case, not an evaluation of the answer.
 
-O `VerdictSchema` contém `overall_score` (1 a 10), `confidence` (0 a 1), `confirmed_issues`, `dismissed_issues` (cada um com motivo), `unverified_issues`, `summary` e `status` (`assessed` ou `inconclusive`). A nota vem da média das notas disponíveis dos críticos, convertida para a escala de 1 a 10; problemas críticos confirmados ou não verificados limitam a nota a 4. A confiança é uma heurística fixa de cobertura das três dimensões, limitada a 0,75 para avaliações completas e reduzida para avaliações parciais; não representa probabilidade estatisticamente calibrada. Nenhuma afirmação factual é verificada de forma independente nesta fase.
+`VerdictSchema` contains `overall_score` (1 to 10), `confidence` (0 to 1), `confirmed_issues`, `dismissed_issues` (each with a reason), `unverified_issues`, `summary`, and `status` (`assessed` or `inconclusive`). The score is the average of the available critic scores, converted to a 1-to-10 scale; confirmed or unverified critical issues cap it at 4. Confidence is a fixed heuristic based on coverage of the three dimensions. It is capped at 0.75 for complete evaluations and reduced for partial ones; it is not a statistically calibrated probability. No factual claims are independently verified at this stage.
 
-Cada crítica segue o esquema `CritiqueSchema`:
+Each critique follows `CritiqueSchema`:
 
-| Campo | Significado |
+| Field | Meaning |
 | --- | --- |
-| `dimension` | `accuracy`, `logic` ou `completeness` |
-| `score` | Nota de 1 a 5 para a dimensão avaliada |
-| `issues` | Problemas com trecho citado (quando aplicável), descrição e severidade (`low`, `medium`, `high` ou `critical`) |
-| `confidence` | Confiança declarada pelo crítico, de 0 a 1 |
+| `dimension` | `accuracy`, `logic`, or `completeness` |
+| `score` | A score from 1 to 5 for the evaluated dimension |
+| `issues` | Issues with a quoted excerpt (when applicable), description, and severity (`low`, `medium`, `high`, or `critical`) |
+| `confidence` | The critic's stated confidence, from 0 to 1 |
 
-As notas representam avaliações dos modelos, não uma verificação independente dos fatos. O crítico factual não consulta fontes externas nesta versão.
+The scores represent model evaluations, not independent fact checks. The factual accuracy critic does not consult external sources in this version.
 
 ## Stack
 
-- **Python 3.14** e **uv** para ambiente e dependências.
-- **LangGraph** para o fluxo de execução e o estado compartilhado.
-- **LangChain**, **langchain-openai** e **langchain-google-genai** para as chamadas aos modelos.
-- **Pydantic** para validar a estrutura das críticas.
-- **python-dotenv** para carregar variáveis de ambiente do arquivo `.env`.
+- **Python 3.14** and **uv** for the environment and dependencies.
+- **LangGraph** for execution flow and shared state.
+- **LangChain**, **langchain-openai**, and **langchain-google-genai** for model calls.
+- **Pydantic** for validating critique structure.
+- **python-dotenv** for loading environment variables from `.env`.
 
-Os modelos estão definidos no código: `gpt-5` para exatidão factual, `gemini-3.5-flash` para consistência lógica e `gpt-5-mini` para completude. Outras bibliotecas constam nas dependências, mas ainda não participam do fluxo implementado.
+The models are defined in the code: `gpt-5` for factual accuracy, `gemini-3.5-flash` for logical consistency, and `gpt-5-mini` for completeness. Other libraries are listed as dependencies but are not yet part of the implemented flow.
 
-## Pré-requisitos e configuração
+## Prerequisites and setup
 
-- Python 3.14 e [uv](https://docs.astral.sh/uv/) instalados.
-- Chaves de API da OpenAI e do Google com acesso aos modelos configurados. As chamadas podem gerar custos nos provedores.
+- Python 3.14 and [uv](https://docs.astral.sh/uv/) installed.
+- OpenAI and Google API keys with access to the configured models. Model calls may incur provider charges.
 
-Na raiz do repositório:
+From the repository root:
 
 ```bash
 uv sync --frozen
 cp .env.example .env
 ```
 
-Preencha o `.env` com, no mínimo:
+Add at least the following to `.env`:
 
 ```dotenv
-OPENAI_API_KEY=sua_chave_openai
-GOOGLE_API_KEY=sua_chave_google
+OPENAI_API_KEY=your_openai_key
+GOOGLE_API_KEY=your_google_key
 ```
 
-O arquivo `.env.example` já inclui opções de LangSmith para observabilidade; elas são opcionais para executar o exemplo. A variável `GOOGLE_API_KEY` precisa ser adicionada ao `.env`, pois ainda não aparece no modelo de arquivo. Não versione chaves reais; `.env` está no `.gitignore`.
+The `.env.example` file already includes optional LangSmith settings for observability. You must add `GOOGLE_API_KEY` to `.env` because it is not yet in the example file. Do not commit real API keys; `.env` is in `.gitignore`.
 
-## Executar
+## Run
 
-O exemplo atual usa a pergunta “What is the capital of France?” e a resposta “The capital of France is Berlin.”:
+The current example uses the question “What is the capital of France?” and the answer “The capital of France is Berlin.”:
 
 ```bash
 uv run python -m src.arbitration.main
 ```
 
-O programa imprime dimensão, nota, confiança e problemas de cada crítica. Para avaliar outra entrada, altere `original_question` e `generated_output` em `src/arbitration/main.py`.
+The program prints each critique's dimension, score, confidence, and issues. To evaluate another input, change `original_question` and `generated_output` in `src/arbitration/main.py`.
 
-Também é possível iniciar o servidor de desenvolvimento do LangGraph para interagir com o grafo `arbitration` definido em `langgraph.json`:
+You can also start the LangGraph development server to interact with the `arbitration` graph defined in `langgraph.json`:
 
 ```bash
 uv run langgraph dev --no-browser
 ```
 
-O estado de entrada requer `original_question` e `generated_output`. O exemplo em `src/arbitration/main.py` mostra o formato completo do estado. Para conferir apenas a configuração do grafo, sem chamar os modelos:
+The input state requires `original_question` and `generated_output`. The example in `src/arbitration/main.py` shows the full state format. To validate only the graph configuration without calling the models:
 
 ```bash
 uv run langgraph validate -c langgraph.json
 ```
 
-Para testar os dois caminhos sem chamadas aos modelos, execute os testes que substituem os críticos e o detector por resultados simulados:
+To test both routes without model calls, run the tests that replace the critics and detector with simulated results:
 
 ```bash
 uv run python -m unittest tests.test_graph_routing -v
 ```
 
-Para simular falhas transitórias e permanentes dos modelos, além de verificar a execução com todos os críticos indisponíveis:
+To simulate transient and permanent model failures and verify execution when all critics are unavailable:
 
 ```bash
 uv run python -m unittest tests.test_critic_retries -v
 ```
 
-## Estrutura principal
+## Main files
 
-| Caminho | Responsabilidade |
+| Path | Responsibility |
 | --- | --- |
-| `src/arbitration/graph.py` | Montagem e compilação do grafo |
-| `src/arbitration/states.py` | Estado compartilhado entre os nós |
-| `src/arbitration/schemas/critique.py` | Esquemas das críticas e problemas |
-| `src/nodes/parse_input.py` | Validação básica da entrada |
-| `src/nodes/critics.py` | Chamadas aos três modelos |
-| `src/nodes/collect_critiques.py` | Conferência das três críticas e das falhas |
-| `src/nodes/detect_disagreements.py` | Detecção de contradições entre problemas relatados |
-| `src/arbitration/schemas/disagreement.py` | Esquema da avaliação estruturada de conflitos |
-| `src/arbitration/schemas/verdict.py` | Esquemas da adjudicação e do veredito |
-| `src/prompts/disagreements.py` | Instruções para comparar as avaliações |
-| `src/prompts/adjudicator.py` | Instruções para adjudicar conflitos |
-| `src/nodes/adjudicator.py` | Decisões estruturadas sobre problemas relatados |
-| `src/nodes/synthesize_verdict.py` | Síntese determinística do veredito |
-| `src/prompts/` | Instruções de avaliação para cada dimensão |
-| `src/arbitration/main.py` | Exemplo de execução no terminal |
-| `langgraph.json` | Registro do grafo para a CLI do LangGraph |
+| `src/arbitration/graph.py` | Graph construction and compilation |
+| `src/arbitration/states.py` | State shared between nodes |
+| `src/arbitration/schemas/critique.py` | Critique and issue schemas |
+| `src/nodes/parse_input.py` | Basic input validation |
+| `src/nodes/critics.py` | Calls to the three models |
+| `src/nodes/collect_critiques.py` | Validation of the three critiques and failures |
+| `src/nodes/detect_disagreements.py` | Detection of contradictions between reported issues |
+| `src/arbitration/schemas/disagreement.py` | Structured conflict evaluation schema |
+| `src/arbitration/schemas/verdict.py` | Adjudication and verdict schemas |
+| `src/prompts/disagreements.py` | Instructions for comparing evaluations |
+| `src/prompts/adjudicator.py` | Instructions for adjudicating conflicts |
+| `src/nodes/adjudicator.py` | Structured decisions about reported issues |
+| `src/nodes/synthesize_verdict.py` | Deterministic verdict synthesis |
+| `src/prompts/` | Evaluation instructions for each dimension |
+| `src/arbitration/main.py` | Command-line example |
+| `langgraph.json` | Graph registration for the LangGraph CLI |
 
-## Estado atual e próximos passos
+## Current status and next steps
 
-- **Implementado:** validação básica da entrada, três críticos em paralelo e críticas estruturadas.
-- **Implementado:** identificação de contradições explícitas entre problemas relatados por críticos diferentes e decisão sobre necessidade de adjudicação. A interpretação das descrições em texto livre usa `gpt-5-mini`; quando não há problemas de pelo menos dois críticos, o detector retorna sem chamar o modelo.
-- **Implementado:** roteamento condicional após a detecção de divergências, com os dois caminhos ligados ao fim do grafo.
-- **Implementado:** adjudicação estruturada de conflitos e síntese determinística de um veredito em ambos os caminhos do grafo, inclusive resultado inconclusivo quando todos os críticos falham.
-- **Ainda não integrado:** recuperação de contexto (RAG), ferramentas e persistência; os diretórios reservados para essas partes não contêm implementação.
-- **Limitação conhecida:** o nó de consistência passa os argumentos ao construtor do prompt em ordem inversa à assinatura da função. Isso pode trocar pergunta e resposta no prompt enviado ao modelo. A execução também depende da disponibilidade das APIs e dos modelos configurados.
+- **Implemented:** basic input validation, three parallel critics, and structured critiques.
+- **Implemented:** identification of explicit contradictions between issues reported by different critics, and a decision on whether adjudication is needed. `gpt-5-mini` interprets the free-text descriptions; when fewer than two critics report issues, the detector returns without calling the model.
+- **Implemented:** conditional routing after disagreement detection, with both routes connected to the end of the graph.
+- **Implemented:** structured conflict adjudication and deterministic verdict synthesis on both graph routes, including an inconclusive result when all critics fail.
+- **Not yet integrated:** context retrieval (RAG), tools, and persistence; the directories reserved for these parts have no implementation.
+- **Known limitation:** the consistency node passes arguments to the prompt constructor in the reverse order of the function signature. This may swap the question and answer in the prompt sent to the model. Execution also depends on the availability of the configured APIs and models.
