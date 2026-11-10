@@ -10,7 +10,5 @@ wheels/
 .venv
 .env
 .langgraph_api
-.agents
-openspec
 TODO.txt
 .pytest_cache/
