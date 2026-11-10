@@ -49,6 +49,7 @@ The scores represent model evaluations, not independent fact checks. The factual
 
 - **Python 3.14** and **uv** for the environment and dependencies.
 - **LangGraph** for execution flow and shared state.
+- **FastAPI** for the HTTP adapter around the existing graph.
 - **LangChain**, **langchain-openai**, and **langchain-google-genai** for model calls.
 - **Pydantic** for validating critique structure.
 - **python-dotenv** for loading environment variables from `.env`.
@@ -78,13 +79,43 @@ The `.env.example` file already includes optional LangSmith settings for observa
 
 ## Run
 
-The current example uses the question “What is the capital of France?” and the answer “The capital of France is Berlin.”:
+### Ask a question through the API
+
+Start the API from the repository root:
+
+```bash
+uv run uvicorn src.api.main:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal, send only the question. The API generates an answer and evaluates it with the existing arbitration graph:
+
+```bash
+curl -i -X POST http://127.0.0.1:8000/generate-and-evaluate \
+  -H 'Content-Type: application/json' \
+  -d '{"original_question":"Qual é a capital da França?"}'
+```
+
+A successful response has HTTP 200 and includes `generated_output` and the structured evaluation, including `verdict`. The request calls the configured OpenAI and Google models, so the API keys in `.env` are required and provider charges may apply. Invalid input returns HTTP 422, a propagated timeout returns HTTP 504, and other execution failures return HTTP 500. You can check that the server is running without calling a model:
+
+```bash
+curl -i http://127.0.0.1:8000/health
+```
+
+To run the API tests without provider calls:
+
+```bash
+uv run pytest -q tests/test_evaluate_api.py tests/test_generate_and_evaluate_api.py tests/test_arbitration_service.py tests/test_health.py
+```
+
+### Use the CLI
+
+The CLI prompts for a question, generates an answer, and evaluates it:
 
 ```bash
 uv run python -m src.arbitration.main
 ```
 
-The program prints each critique's dimension, score, confidence, and issues. To evaluate another input, change `original_question` and `generated_output` in `src/arbitration/main.py`.
+The program prints the generated answer, each critique, and the verdict. Enter another question at the prompt to evaluate a different input.
 
 You can also start the LangGraph development server to interact with the `arbitration` graph defined in `langgraph.json`:
 
@@ -129,6 +160,8 @@ uv run python -m unittest tests.test_critic_retries -v
 | `src/nodes/synthesize_verdict.py` | Deterministic verdict synthesis |
 | `src/prompts/` | Evaluation instructions for each dimension |
 | `src/arbitration/main.py` | Command-line example |
+| `src/api/main.py` | FastAPI application and request validation responses |
+| `src/api/routes/arbitration.py` | Evaluation and question-only generation endpoints |
 | `langgraph.json` | Graph registration for the LangGraph CLI |
 
 ## Current status and next steps
