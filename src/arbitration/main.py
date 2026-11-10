@@ -4,6 +4,12 @@ from langchain_openai import ChatOpenAI
 from src.arbitration.graph import run_agents_graph
 
 
+def generate_response(question: str) -> str:
+    llm = ChatOpenAI(model="gpt-5-mini")
+    response = llm.invoke(question)
+    return str(response.content)
+
+
 def main():
     question = input("Question: ").strip()
 
@@ -11,10 +17,7 @@ def main():
         print("Question cannot be empty.")
         return
 
-    llm = ChatOpenAI(model="gpt-5-mini")
-    response = llm.invoke(question)
-
-    generated_output = str(response.content)
+    generated_output = generate_response(question)
 
     print("\n=== GENERATED RESPONSE ===")
     print(generated_output)

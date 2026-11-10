@@ -14,3 +14,7 @@ class EvaluationResponse(BaseModel):
     requires_adjudication: bool
     adjudication: AdjudicationSchema | None
     verdict: VerdictSchema
+
+
+class GenerationEvaluationResponse(EvaluationResponse):
+    generated_output: str

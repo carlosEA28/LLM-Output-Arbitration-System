@@ -11,3 +11,14 @@ class EvaluationRequest(BaseModel):
         if not value.strip():
             raise ValueError("Must contain non-whitespace text")
         return value
+
+
+class GenerationRequest(BaseModel):
+    original_question: StrictStr
+
+    @field_validator("original_question")
+    @classmethod
+    def require_nonblank_question(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Must contain non-whitespace text")
+        return value
