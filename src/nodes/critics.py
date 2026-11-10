@@ -118,7 +118,7 @@ def logic_critic(state:ArbitrationState) -> dict:
             question=original_question, text=generated_output
         ))
 
-        llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", retries=1)
+        llm = ChatOpenAI(model="gpt-5-mini",streaming=False,max_retries=2,)
         llm_with_structured_output = llm.with_structured_output(CritiqueSchema)
         llm_response = _invoke_with_retries(llm_with_structured_output, [sysPrompt, prompts])
 
