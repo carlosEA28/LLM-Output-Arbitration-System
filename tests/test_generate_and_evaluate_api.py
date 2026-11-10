@@ -1,7 +1,9 @@
 from unittest.mock import Mock
 
 import pytest
+import httpx
 from fastapi.testclient import TestClient
+from openai import APITimeoutError
 
 from src.api.main import app
 from src.api.routes import arbitration
@@ -79,6 +81,22 @@ def test_invalid_question_returns_422_without_service(monkeypatch, payload):
     service.assert_not_called()
 
 
+def test_invalid_question_does_not_echo_private_payload(monkeypatch):
+    service = Mock()
+    monkeypatch.setattr(arbitration, "generate_and_evaluate", service)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/generate-and-evaluate",
+            json={"original_question": {"secret": "private prompt and credential"}},
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Invalid request"}
+    assert "private prompt and credential" not in response.text
+    service.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "generated",
     [RuntimeError("provider-token-and-model-payload"), " \t "],
@@ -119,6 +137,52 @@ def test_arbitration_failure_is_private(monkeypatch):
     assert response.status_code == 500
     assert response.json() == {"detail": "Generation and evaluation failed"}
     assert "provider-token-and-model-payload" not in response.text
+    evaluation.assert_called_once_with("Question?", "Generated answer.")
+
+
+@pytest.mark.parametrize(
+    "timeout",
+    [
+        TimeoutError("token=private prompt=hidden provider traceback"),
+        httpx.ReadTimeout("token=private prompt=hidden provider traceback"),
+        APITimeoutError(request=httpx.Request("POST", "https://example.invalid")),
+    ],
+)
+def test_generation_timeout_is_safe_and_skips_arbitration(monkeypatch, timeout):
+    generator = Mock(side_effect=timeout)
+    evaluation = Mock()
+    monkeypatch.setattr(arbitration_service, "generate_response", generator)
+    monkeypatch.setattr(arbitration_service, "evaluate_response", evaluation)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/generate-and-evaluate", json={"original_question": "Question?"}
+        )
+
+    assert response.status_code == 504
+    assert response.json() == {"detail": "Generation and evaluation timed out"}
+    assert "token=private" not in response.text
+    assert "prompt=hidden" not in response.text
+    assert "traceback" not in response.text
+    evaluation.assert_not_called()
+
+
+def test_arbitration_timeout_after_generation_is_safe(monkeypatch):
+    generator = Mock(return_value="Generated answer.")
+    evaluation = Mock(side_effect=TimeoutError("token=private prompt=hidden provider traceback"))
+    monkeypatch.setattr(arbitration_service, "generate_response", generator)
+    monkeypatch.setattr(arbitration_service, "evaluate_response", evaluation)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/generate-and-evaluate", json={"original_question": "Question?"}
+        )
+
+    assert response.status_code == 504
+    assert response.json() == {"detail": "Generation and evaluation timed out"}
+    assert "token=private" not in response.text
+    assert "prompt=hidden" not in response.text
+    assert "traceback" not in response.text
     evaluation.assert_called_once_with("Question?", "Generated answer.")
 
 

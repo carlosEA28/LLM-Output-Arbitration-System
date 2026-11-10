@@ -1,7 +1,9 @@
 from unittest.mock import Mock
 
 import pytest
+import httpx
 from fastapi.testclient import TestClient
+from openai import APITimeoutError
 
 from src.api.main import app
 from src.api.routes import arbitration
@@ -127,6 +129,27 @@ def test_evaluate_does_not_expose_graph_exception(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "timeout",
+    [
+        TimeoutError("token=private prompt=hidden provider traceback"),
+        httpx.ReadTimeout("token=private prompt=hidden provider traceback"),
+        APITimeoutError(request=httpx.Request("POST", "https://example.invalid")),
+    ],
+)
+def test_evaluate_returns_safe_timeout_response(monkeypatch, timeout):
+    monkeypatch.setattr(arbitration, "evaluate_response", Mock(side_effect=timeout))
+
+    with TestClient(app) as client:
+        response = client.post("/evaluate", json=REQUEST)
+
+    assert response.status_code == 504
+    assert response.json() == {"detail": "Evaluation timed out"}
+    assert "token=private" not in response.text
+    assert "prompt=hidden" not in response.text
+    assert "traceback" not in response.text
+
+
+@pytest.mark.parametrize(
     "payload",
     [
         {"generated_output": "Answer."},
@@ -144,4 +167,23 @@ def test_invalid_input_returns_422_without_graph_execution(monkeypatch, payload)
         response = client.post("/evaluate", json=payload)
 
     assert response.status_code == 422
+    service.assert_not_called()
+
+
+def test_invalid_input_does_not_echo_private_payload(monkeypatch):
+    service = Mock()
+    monkeypatch.setattr(arbitration, "evaluate_response", service)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/evaluate",
+            json={
+                "original_question": {"secret": "private prompt and credential"},
+                "generated_output": "Answer.",
+            },
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Invalid request"}
+    assert "private prompt and credential" not in response.text
     service.assert_not_called()

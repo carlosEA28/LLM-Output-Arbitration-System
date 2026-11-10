@@ -1,4 +1,6 @@
+import httpx
 from fastapi import APIRouter, HTTPException
+from openai import APITimeoutError
 
 from src.api.schemas.requests import EvaluationRequest, GenerationRequest
 from src.api.schemas.responses import EvaluationResponse, GenerationEvaluationResponse
@@ -14,6 +16,8 @@ def evaluate(request: EvaluationRequest) -> EvaluationResponse:
         return EvaluationResponse.model_validate(
             {**result, "adjudication": result.get("adjudication")}
         )
+    except (TimeoutError, httpx.TimeoutException, APITimeoutError):
+        raise HTTPException(status_code=504, detail="Evaluation timed out") from None
     except Exception:
         raise HTTPException(status_code=500, detail="Evaluation failed") from None
 
@@ -25,5 +29,7 @@ def generate_and_evaluate_route(request: GenerationRequest) -> GenerationEvaluat
         return GenerationEvaluationResponse.model_validate(
             {**result, "adjudication": result.get("adjudication")}
         )
+    except (TimeoutError, httpx.TimeoutException, APITimeoutError):
+        raise HTTPException(status_code=504, detail="Generation and evaluation timed out") from None
     except Exception:
         raise HTTPException(status_code=500, detail="Generation and evaluation failed") from None
