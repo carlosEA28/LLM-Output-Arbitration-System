@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi",
+    "httpx",
     "langchain>=1.4.9",
     "langchain-chroma>=1.1.0",
     "langchain-gemini>=0.1.1",
