@@ -5,9 +5,11 @@ from fastapi import APIRouter, HTTPException, Response
 from openai import APITimeoutError
 
 from src.api import arbitration_history
-from src.api.schemas.requests import EvaluationRequest, GenerationRequest
+from src.api.schemas.requests import BatchEvaluationRequest, EvaluationRequest, GenerationRequest
 from src.api.schemas.responses import (
     ArbitrationHistoryResponse,
+    BatchEvaluationItemResponse,
+    BatchEvaluationResponse,
     EvaluationResponse,
     GenerationEvaluationResponse,
 )
@@ -31,6 +33,31 @@ def evaluate(request: EvaluationRequest) -> EvaluationResponse:
         raise HTTPException(status_code=504, detail="Evaluation timed out") from None
     except Exception:
         raise HTTPException(status_code=500, detail="Evaluation failed") from None
+
+
+@router.post("/v1/arbitrate/batch", response_model=BatchEvaluationResponse)
+def evaluate_batch(request: BatchEvaluationRequest) -> BatchEvaluationResponse:
+    results = []
+    for index, item in enumerate(request.items):
+        try:
+            result = evaluate_response(item.original_question, item.generated_output)
+            evaluation = EvaluationResponse.model_validate(
+                {**result, "adjudication": result.get("adjudication")}
+            )
+            results.append(BatchEvaluationItemResponse(
+                index=index, status="completed", evaluation=evaluation, error=None
+            ))
+        except (TimeoutError, httpx.TimeoutException, APITimeoutError):
+            results.append(BatchEvaluationItemResponse(
+                index=index, status="timed_out", evaluation=None,
+                error="Evaluation timed out",
+            ))
+        except Exception:
+            results.append(BatchEvaluationItemResponse(
+                index=index, status="failed", evaluation=None,
+                error="Evaluation failed",
+            ))
+    return BatchEvaluationResponse(results=results)
 
 
 @router.post("/generate-and-evaluate", response_model=GenerationEvaluationResponse)

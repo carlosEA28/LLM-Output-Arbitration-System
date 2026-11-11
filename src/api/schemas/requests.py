@@ -1,4 +1,4 @@
-from pydantic import BaseModel, StrictStr, field_validator
+from pydantic import BaseModel, Field, StrictStr, field_validator
 
 
 class EvaluationRequest(BaseModel):
@@ -11,6 +11,10 @@ class EvaluationRequest(BaseModel):
         if not value.strip():
             raise ValueError("Must contain non-whitespace text")
         return value
+
+
+class BatchEvaluationRequest(BaseModel):
+    items: list[EvaluationRequest] = Field(min_length=1)
 
 
 class GenerationRequest(BaseModel):

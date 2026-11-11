@@ -29,15 +29,23 @@ On success, the API SHALL return a unique `id`, `generated_output`, and the eval
 - **THEN** the API returns HTTP 200 with `adjudication: null` where absent, preserves the verdict and diagnostics, and supplies the persisted execution ID
 
 ### Requirement: Keep generation and evaluation failures private
-The API SHALL return a generic server error if generation fails, yields no nonblank answer, or arbitration fails or returns no valid verdict. Error responses MUST NOT expose provider exception text, credentials, or model payloads.
+The API SHALL return a generic HTTP 500 response if generation fails for a reason other than a propagated timeout, yields no nonblank answer, or arbitration fails or returns no valid verdict for a reason other than a propagated timeout. A propagated generation or arbitration timeout SHALL return a generic HTTP 504 response. Error responses MUST NOT expose provider exception text, credentials, private prompts, or model payloads.
 
 #### Scenario: Generation failure
-- **WHEN** the generator raises an exception or yields a blank answer
+- **WHEN** the generator raises a non-timeout exception or yields a blank answer
 - **THEN** the API returns HTTP 500 without invoking arbitration or exposing internal details
 
 #### Scenario: Arbitration failure
-- **WHEN** arbitration raises an exception or returns no valid verdict after an answer is generated
+- **WHEN** arbitration raises a non-timeout exception or returns no valid verdict after an answer is generated
 - **THEN** the API returns HTTP 500 without exposing internal details
+
+#### Scenario: Generation timeout
+- **WHEN** generation propagates a timeout
+- **THEN** the API returns HTTP 504 without invoking arbitration or exposing internal details
+
+#### Scenario: Arbitration timeout
+- **WHEN** arbitration propagates a timeout after an answer is generated
+- **THEN** the API returns HTTP 504 without exposing internal details
 
 ### Requirement: Make failed execution IDs available
 For a valid `POST /generate-and-evaluate` request that ends in HTTP 500 or 504 after a history record is created, the API SHALL include its ID in the `X-Arbitration-ID` response header while retaining the existing generic error body. The same header SHALL appear on successful responses.

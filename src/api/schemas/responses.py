@@ -20,6 +20,17 @@ class EvaluationResponse(BaseModel):
     verdict: VerdictSchema
 
 
+class BatchEvaluationItemResponse(BaseModel):
+    index: int
+    status: Literal["completed", "failed", "timed_out"]
+    evaluation: EvaluationResponse | None
+    error: str | None
+
+
+class BatchEvaluationResponse(BaseModel):
+    results: list[BatchEvaluationItemResponse]
+
+
 class GenerationEvaluationResponse(EvaluationResponse):
     id: UUID
     generated_output: str
