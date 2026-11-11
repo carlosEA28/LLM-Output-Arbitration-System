@@ -95,7 +95,17 @@ curl -i -X POST http://127.0.0.1:8000/generate-and-evaluate \
   -d '{"original_question":"Qual é a capital da França?"}'
 ```
 
-A successful response has HTTP 200 and includes `generated_output` and the structured evaluation, including `verdict`. The request calls the configured OpenAI and Google models, so the API keys in `.env` are required and provider charges may apply. Invalid input returns HTTP 422, a propagated timeout returns HTTP 504, and other execution failures return HTTP 500. You can check that the server is running without calling a model:
+A successful response has HTTP 200 and includes a UUID `id`, `generated_output`, and the structured evaluation, including `verdict`. The `X-Arbitration-ID` response header contains the same ID. Each valid question-only request is stored in SQLite at `arbitrations.sqlite3` in the server's working directory. Set `ARBITRATION_DB_PATH` to choose another file path; its parent directory must already exist and be writable.
+
+Retrieve the stored execution using the ID from the response:
+
+```bash
+curl -i http://127.0.0.1:8000/v1/arbitrations/<id>
+```
+
+The GET response contains `id`, `created_at` (UTC), `status`, `original_question`, `generated_output`, and `evaluation`. A completed execution has `status: completed` and the complete evaluation under `evaluation`, even if its verdict is `inconclusive`. During execution the status is `pending`. When generation or evaluation ends in HTTP 500 or 504 after creating a record, the response retains its generic error body and supplies `X-Arbitration-ID`; the stored status is `failed` or `timed_out`, and unavailable output or evaluation fields are `null`. An unknown UUID returns HTTP 404 and a malformed ID returns HTTP 422. Invalid question input and `POST /evaluate` do not create history records.
+
+The request calls the configured OpenAI and Google models, so the API keys in `.env` are required and provider charges may apply. Invalid input returns HTTP 422, a propagated timeout returns HTTP 504, and other execution failures return HTTP 500. You can check that the server is running without calling a model:
 
 ```bash
 curl -i http://127.0.0.1:8000/health
@@ -104,7 +114,7 @@ curl -i http://127.0.0.1:8000/health
 To run the API tests without provider calls:
 
 ```bash
-uv run pytest -q tests/test_evaluate_api.py tests/test_generate_and_evaluate_api.py tests/test_arbitration_service.py tests/test_health.py
+uv run pytest -q tests/test_evaluate_api.py tests/test_generate_and_evaluate_api.py tests/test_arbitration_history_api.py tests/test_arbitration_history.py tests/test_persisted_generation_service.py tests/test_arbitration_service.py tests/test_health.py
 ```
 
 ### Use the CLI
@@ -162,6 +172,7 @@ uv run python -m unittest tests.test_critic_retries -v
 | `src/arbitration/main.py` | Command-line example |
 | `src/api/main.py` | FastAPI application and request validation responses |
 | `src/api/routes/arbitration.py` | Evaluation and question-only generation endpoints |
+| `src/api/arbitration_history.py` | SQLite history for question-only API executions |
 | `langgraph.json` | Graph registration for the LangGraph CLI |
 
 ## Current status and next steps
@@ -170,5 +181,6 @@ uv run python -m unittest tests.test_critic_retries -v
 - **Implemented:** identification of explicit contradictions between issues reported by different critics, and a decision on whether adjudication is needed. `gpt-5-mini` interprets the free-text descriptions; when fewer than two critics report issues, the detector returns without calling the model.
 - **Implemented:** conditional routing after disagreement detection, with both routes connected to the end of the graph.
 - **Implemented:** structured conflict adjudication and deterministic verdict synthesis on both graph routes, including an inconclusive result when all critics fail.
-- **Not yet integrated:** context retrieval (RAG), tools, and persistence; the directories reserved for these parts have no implementation.
+- **Implemented:** SQLite history for the question-only API flow, with retrieval by ID.
+- **Not yet integrated:** context retrieval (RAG) and tools; the directories reserved for these parts have no implementation.
 - **Known limitation:** the consistency node passes arguments to the prompt constructor in the reverse order of the function signature. This may swap the question and answer in the prompt sent to the model. Execution also depends on the availability of the configured APIs and models.

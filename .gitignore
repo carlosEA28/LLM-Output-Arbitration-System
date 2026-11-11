@@ -12,3 +12,4 @@ wheels/
 .langgraph_api
 TODO.txt
 .pytest_cache/
+arbitrations.sqlite3

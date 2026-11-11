@@ -1,3 +1,7 @@
+from datetime import datetime
+from typing import Literal
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from src.arbitration.schemas.critique import CritiqueSchema
@@ -17,4 +21,14 @@ class EvaluationResponse(BaseModel):
 
 
 class GenerationEvaluationResponse(EvaluationResponse):
+    id: UUID
     generated_output: str
+
+
+class ArbitrationHistoryResponse(BaseModel):
+    id: UUID
+    status: Literal["pending", "completed", "failed", "timed_out"]
+    created_at: datetime
+    original_question: str
+    generated_output: str | None
+    evaluation: EvaluationResponse | None

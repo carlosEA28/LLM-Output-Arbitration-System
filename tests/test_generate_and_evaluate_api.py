@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from uuid import UUID, uuid4
 
 import pytest
 import httpx
@@ -7,16 +8,23 @@ from openai import APITimeoutError
 
 from src.api.main import app
 from src.api.routes import arbitration
+from src.api.schemas.responses import GenerationEvaluationResponse
 from src.api.services import arbitration_service
 from src.arbitration.schemas.verdict import VerdictSchema
 from tests.test_evaluate_api import graph_result
 
 
+@pytest.fixture(autouse=True)
+def database_path(monkeypatch, tmp_path):
+    monkeypatch.setenv("ARBITRATION_DB_PATH", str(tmp_path / "arbitrations.sqlite3"))
+
+
 def test_generate_and_evaluate_returns_answer_and_structured_result(monkeypatch):
     result = graph_result()
     result["generated_output"] = "Generated answer."
-    service = Mock(return_value=result)
-    monkeypatch.setattr(arbitration, "generate_and_evaluate", service)
+    result["id"] = uuid4()
+    service = Mock(return_value=GenerationEvaluationResponse.model_validate(result))
+    monkeypatch.setattr(arbitration, "generate_and_evaluate_persisted", service)
 
     with TestClient(app) as client:
         response = client.post(
@@ -27,6 +35,8 @@ def test_generate_and_evaluate_returns_answer_and_structured_result(monkeypatch)
     service.assert_called_once_with("Question?")
     body = response.json()
     assert set(body) == set(result)
+    assert body["id"] == str(result["id"])
+    assert response.headers["X-Arbitration-ID"] == body["id"]
     assert body["generated_output"] == "Generated answer."
     assert body["critiques"] == [result["critiques"][0].model_dump(mode="json")]
     assert body["adjudication"] == result["adjudication"].model_dump(mode="json")
@@ -49,7 +59,11 @@ def test_generate_and_evaluate_preserves_direct_inconclusive_result(monkeypatch)
         generated_output="Generated answer.",
     )
     result.pop("adjudication")
-    monkeypatch.setattr(arbitration, "generate_and_evaluate", Mock(return_value=result))
+    result["id"] = uuid4()
+    monkeypatch.setattr(
+        arbitration, "generate_and_evaluate_persisted",
+        Mock(return_value=GenerationEvaluationResponse.model_validate({**result, "adjudication": None})),
+    )
 
     with TestClient(app) as client:
         response = client.post(
@@ -72,7 +86,7 @@ def test_generate_and_evaluate_preserves_direct_inconclusive_result(monkeypatch)
 )
 def test_invalid_question_returns_422_without_service(monkeypatch, payload):
     service = Mock()
-    monkeypatch.setattr(arbitration, "generate_and_evaluate", service)
+    monkeypatch.setattr(arbitration, "generate_and_evaluate_persisted", service)
 
     with TestClient(app) as client:
         response = client.post("/generate-and-evaluate", json=payload)
@@ -83,7 +97,7 @@ def test_invalid_question_returns_422_without_service(monkeypatch, payload):
 
 def test_invalid_question_does_not_echo_private_payload(monkeypatch):
     service = Mock()
-    monkeypatch.setattr(arbitration, "generate_and_evaluate", service)
+    monkeypatch.setattr(arbitration, "generate_and_evaluate_persisted", service)
 
     with TestClient(app) as client:
         response = client.post(
@@ -188,7 +202,8 @@ def test_arbitration_timeout_after_generation_is_safe(monkeypatch):
 
 @pytest.mark.parametrize("result", [None, {"generated_output": "Answer.", "verdict": None}])
 def test_invalid_verdict_returns_generic_error(monkeypatch, result):
-    monkeypatch.setattr(arbitration, "generate_and_evaluate", Mock(return_value=result))
+    monkeypatch.setattr(arbitration_service, "generate_response", Mock(return_value="Answer."))
+    monkeypatch.setattr(arbitration_service, "evaluate_response", Mock(return_value=result))
 
     with TestClient(app) as client:
         response = client.post(
@@ -197,3 +212,4 @@ def test_invalid_verdict_returns_generic_error(monkeypatch, result):
 
     assert response.status_code == 500
     assert response.json() == {"detail": "Generation and evaluation failed"}
+    UUID(response.headers["X-Arbitration-ID"])

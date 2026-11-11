@@ -1,10 +1,21 @@
 import httpx
-from fastapi import APIRouter, HTTPException
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Response
 from openai import APITimeoutError
 
+from src.api import arbitration_history
 from src.api.schemas.requests import EvaluationRequest, GenerationRequest
-from src.api.schemas.responses import EvaluationResponse, GenerationEvaluationResponse
-from src.api.services.arbitration_service import evaluate_response, generate_and_evaluate
+from src.api.schemas.responses import (
+    ArbitrationHistoryResponse,
+    EvaluationResponse,
+    GenerationEvaluationResponse,
+)
+from src.api.services.arbitration_service import (
+    PersistedExecutionError,
+    evaluate_response,
+    generate_and_evaluate_persisted,
+)
 
 router = APIRouter()
 
@@ -23,13 +34,36 @@ def evaluate(request: EvaluationRequest) -> EvaluationResponse:
 
 
 @router.post("/generate-and-evaluate", response_model=GenerationEvaluationResponse)
-def generate_and_evaluate_route(request: GenerationRequest) -> GenerationEvaluationResponse:
+def generate_and_evaluate_route(
+    request: GenerationRequest, response: Response
+) -> GenerationEvaluationResponse:
     try:
-        result = generate_and_evaluate(request.original_question)
-        return GenerationEvaluationResponse.model_validate(
-            {**result, "adjudication": result.get("adjudication")}
+        result = generate_and_evaluate_persisted(request.original_question)
+        response.headers["X-Arbitration-ID"] = str(result.id)
+        return result
+    except PersistedExecutionError as error:
+        status_code = 504 if error.timed_out else 500
+        detail = (
+            "Generation and evaluation timed out"
+            if error.timed_out else "Generation and evaluation failed"
         )
-    except (TimeoutError, httpx.TimeoutException, APITimeoutError):
-        raise HTTPException(status_code=504, detail="Generation and evaluation timed out") from None
+        raise HTTPException(
+            status_code=status_code,
+            detail=detail,
+            headers={"X-Arbitration-ID": str(error.arbitration_id)},
+        ) from None
     except Exception:
         raise HTTPException(status_code=500, detail="Generation and evaluation failed") from None
+
+
+@router.get("/v1/arbitrations/{id}", response_model=ArbitrationHistoryResponse)
+def get_arbitration(id: UUID) -> ArbitrationHistoryResponse:
+    try:
+        record = arbitration_history.get(id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="Arbitration not found")
+        return ArbitrationHistoryResponse.model_validate(record)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="History retrieval failed") from None
