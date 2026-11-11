@@ -1,7 +1,7 @@
 services:
   api:
-    build: .
-    env_file: .env
+    build: ./backend
+    env_file: ./backend/.env
     environment:
       ARBITRATION_DB_PATH: /app/data/arbitrations.sqlite3
     ports:
