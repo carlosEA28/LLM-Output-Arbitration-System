@@ -1,0 +1,16 @@
+.git
+.agents
+.aws
+.codex
+.venv
+.env
+.pytest_cache
+.langgraph_api
+__pycache__
+*.pyc
+tests
+reports
+data
+docs
+openspec
+arbitrations.sqlite3

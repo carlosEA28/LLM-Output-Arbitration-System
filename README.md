@@ -75,7 +75,7 @@ OPENAI_API_KEY=your_openai_key
 GOOGLE_API_KEY=your_google_key
 ```
 
-The `.env.example` file already includes optional LangSmith settings for observability. You must add `GOOGLE_API_KEY` to `.env` because it is not yet in the example file. Do not commit real API keys; `.env` is in `.gitignore`.
+The `.env.example` file also includes optional LangSmith settings for observability. Do not commit real API keys; `.env` is in `.gitignore`.
 
 ## Run
 
@@ -110,6 +110,19 @@ The request calls the configured OpenAI and Google models, so the API keys in `.
 ```bash
 curl -i http://127.0.0.1:8000/health
 ```
+
+### Run with Docker Compose
+
+Create `.env` from `.env.example` and set `OPENAI_API_KEY` and `GOOGLE_API_KEY` before making arbitration requests. Then run:
+
+```bash
+docker compose up --build -d
+docker compose ps
+curl -i http://127.0.0.1:8000/health
+```
+
+Compose publishes port 8000, checks `/health` without calling a model, and stores arbitration history in a named SQLite volume. Stop the API with `docker compose down`; the volume remains available for the next start.
+Set `API_PORT` before running Compose if port 8000 is already in use.
 
 To run the API tests without provider calls:
 
