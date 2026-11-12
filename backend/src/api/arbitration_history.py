@@ -90,3 +90,11 @@ def get(arbitration_id: UUID) -> dict | None:
             json.loads(row["evaluation_json"]) if row["evaluation_json"] else None
         ),
     }
+
+
+def list_analytics_records() -> list[tuple[str, str | None]]:
+    with _connect() as connection:
+        rows = connection.execute(
+            "SELECT status, evaluation_json FROM arbitrations"
+        ).fetchall()
+    return [(row["status"], row["evaluation_json"]) for row in rows]

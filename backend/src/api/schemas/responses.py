@@ -43,3 +43,33 @@ class ArbitrationHistoryResponse(BaseModel):
     original_question: str
     generated_output: str | None
     evaluation: EvaluationResponse | None
+
+
+class ArbitrationMetricsResponse(BaseModel):
+    total: int
+    assessed: int
+    inconclusive: int
+
+
+class CriticMetricsResponse(BaseModel):
+    evaluations: int
+    average_score: float
+    issues: int
+
+
+class CriticsMetricsResponse(BaseModel):
+    accuracy: CriticMetricsResponse
+    logic: CriticMetricsResponse
+    completeness: CriticMetricsResponse
+
+
+class AdjudicationMetricsResponse(BaseModel):
+    requested: int
+    confirmed_issues: int
+    dismissed_issues: int
+
+
+class AnalyticsResponse(BaseModel):
+    arbitrations: ArbitrationMetricsResponse
+    critics: CriticsMetricsResponse
+    adjudication: AdjudicationMetricsResponse
